@@ -186,8 +186,9 @@ end
 
 function A.Garages()
     local out={}
-    if GetResourceState('rs-garage')=='started' then
-        local ok,garages=pcall(function() return exports['rs-garage']:getAllGarages() end)
+    for _,provider in ipairs({'rs-garage','rs-zombiegarage'}) do
+      if GetResourceState(provider)=='started' then
+        local ok,garages=pcall(function() return exports[provider]:getAllGarages() end)
         if ok and type(garages)=='table' then
             for _,g in ipairs(garages) do
                 if type(g)=='table' and g.name then out[#out+1]={name=g.name,label=g.label or g.name} end
@@ -196,6 +197,7 @@ function A.Garages()
             return out
         end
         return out
+      end
     end
     if A.Framework()=='qbox' and GetResourceState('qbx_garages')=='started' then
         local ok, garages=pcall(function() return exports.qbx_garages:GetGarages() end)

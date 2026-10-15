@@ -1,9 +1,8 @@
 {
   "archive": "rs-adminmenu.zip",
-  "sha256": "30e784f888bdf916621e5e2b796a2ac607273a3b5e1afa6a05ff9063db460310",
+  "sha256": "b404cf72ca8f94de6532ce1e1d7a96cb134dba7318ccea341f5a11cd1447d1ca",
   "resourceFolder": "rs-adminmenu",
-  "manifestVersion": "0.14.2",
-  "importedOn": "2026-10-15",
-  "sourceFiles": 90,
-  "tebex": null
+  "updatedOn": "2026-10-15",
+  "sourceFiles": 98,
+  "cleanDataTemplates": true
 }

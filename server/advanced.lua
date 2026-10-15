@@ -535,8 +535,31 @@ AddEventHandler('playerJoining',function() local src=source; SetTimeout(2200,fun
 -- World / disaster state -------------------------------------------------------
 local WORLD={}; for k,v in pairs(Config.World.defaults or {}) do WORLD[k]=v end
 WORLD.overrides={}
-local function worldBroadcast(target) TriggerClientEvent('rs-admin:client:worldState',target or -1,WORLD) end
-H('world:state','world',function() return Ok(WORLD) end)
+local worldEpoch=os.time()
+local function fallbackWorld()
+    -- Leave established weather controllers in charge. Custom controllers can
+    -- opt out with set rs_admin_world_sync off, or Config.World.syncProviders.
+    if GetConvar('rs_admin_world_sync','auto')=='off' then return {enabled=false,provider='external'} end
+    local providers=Config.World.syncProviders or {'qb-weathersync','qbx_weathersync','vSync','vsync','weathersync','cd_easytime','Renewed-Weathersync','rs-zombiecore','rs-zcoreopplifeline'}
+    for _,provider in ipairs(providers) do if GetResourceState(provider)=='started' then return {enabled=false,provider=provider} end end
+    local defaults=Config.World.defaults or {}
+    local secondsPerMinute=math.max(1,tonumber(Config.World.secondsPerGameMinute) or 2)
+    local minutes=((defaults.hour or 12)*60+(defaults.minute or 0)+(os.time()-worldEpoch)/secondsPerMinute)%1440
+    return {enabled=true,provider='rs-adminmenu',weather=defaults.weather or 'CLEAR',rain=-1,wind=defaults.wind or 0,windDirection=defaults.windDirection or 0,hour=math.floor(minutes/60),minute=math.floor(minutes%60),second=math.floor((minutes%1)*60)}
+end
+local function worldSnapshot()
+    local state={};for key,value in pairs(WORLD) do state[key]=value end;state.fallback=fallbackWorld();return state
+end
+local function worldBroadcast(target) TriggerClientEvent('rs-admin:client:worldState',target or -1,worldSnapshot()) end
+H('world:state','world',function() return Ok(worldSnapshot()) end)
+CreateThread(function()
+    local previous
+    while true do
+        local fallback=fallbackWorld();local current=fallback.enabled and 'rs-adminmenu' or fallback.provider
+        if fallback.enabled or current~=previous then TriggerClientEvent('rs-admin:client:worldFallback',-1,fallback) end
+        previous=current;Wait(1000)
+    end
+end)
 local function patchWorld(src,d)
     local weather
     if d.weather~=nil then
