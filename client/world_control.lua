@@ -8,14 +8,26 @@ local function restoreWeather(hash)
 end
 local function controlled(s,key) return type(s.overrides)=='table' and s.overrides[key]==true end
 local function clamp(v,a,b) v=tonumber(v) or a; return v<a and a or v>b and b or v end
-local function merged() local o={overrides={}};for k,v in pairs(W.state) do if k~='overrides' then o[k]=v end end;for k,v in pairs(W.state.overrides or {}) do o.overrides[k]=v end;for k,v in pairs((W.disaster and W.disaster.overlay) or {}) do o[k]=v;o.overrides[k]=true end;return o end
+local function merged()
+    local o={overrides={}};for k,v in pairs(W.state) do if k~='overrides' then o[k]=v end end
+    for k,v in pairs(W.state.overrides or {}) do o.overrides[k]=v end
+    local fallback=W.state.fallback
+    if fallback and fallback.enabled then
+        for _,key in ipairs({'weather','rain','wind','windDirection'}) do if not controlled(W.state,key) then o[key]=fallback[key];o.overrides[key]=true end end
+        if not controlled(W.state,'hour') and not controlled(W.state,'minute') then
+            o.hour,o.minute,o.second=fallback.hour,fallback.minute,fallback.second;o.overrides.hour=true;o.overrides.minute=true
+        end
+    end
+    for k,v in pairs((W.disaster and W.disaster.overlay) or {}) do o[k]=v;o.overrides[k]=true end
+    return o
+end
 local function apply(s)
     local ownsWeather=controlled(s,'weather');local ownsTime=controlled(s,'hour') or controlled(s,'minute')
     if ownsWeather and not claimed.weather then previousWeather=GetNextWeatherTypeHashName() end
     if controlled(s,'wind') and not claimed.wind then previousWind=GetWindSpeed() end
     if ownsWeather and s.weather then SetWeatherTypePersist(s.weather);SetWeatherTypeNowPersist(s.weather);SetOverrideWeather(s.weather)
     elseif claimed.weather then ClearOverrideWeather();ClearWeatherTypePersist();restoreWeather(previousWeather) end
-    if ownsTime then NetworkOverrideClockTime(math.floor(clamp(s.hour,0,23)),math.floor(clamp(s.minute or 0,0,59)),0)
+    if ownsTime then NetworkOverrideClockTime(math.floor(clamp(s.hour,0,23)),math.floor(clamp(s.minute or 0,0,59)),math.floor(clamp(s.second or 0,0,59)))
     elseif claimed.time then NetworkClearClockTimeOverride() end
     if controlled(s,'blackout') then SetArtificialLightsState(s.blackout==true);SetArtificialLightsStateAffectsVehicles(false)
     elseif claimed.blackout then SetArtificialLightsState(false) end
@@ -26,6 +38,8 @@ local function apply(s)
 end
 exports('IsWorldControlled',function(key) local s=merged();return controlled(s,key) or (key=='time' and (controlled(s,'hour') or controlled(s,'minute'))) end)
 RegisterNetEvent('rs-admin:client:worldState',function(d) for k,v in pairs(d or {}) do W.state[k]=v end; apply(merged()); SendNUIMessage({type='worldState',data=W.state}) end)
+-- Clock ticks do not rebuild NUI forms or discard an operator's edits.
+RegisterNetEvent('rs-admin:client:worldFallback',function(d) W.state.fallback=d;apply(merged()) end)
 RSAdmin.LocalActions=RSAdmin.LocalActions or {}
 RSAdmin.LocalActions.worldProbe=function()
     local function weatherName(hash)
@@ -87,10 +101,10 @@ RegisterNetEvent('rs-admin:client:disaster',function(d)
 end)
 RegisterNetEvent('rs-admin:client:disasterStop',function()
     W.serial=W.serial+1;local old=W.disaster and W.disaster.name;local restore=W.disaster and W.disaster.restore
-    clearDisaster(W.disaster);W.disaster=nil;StopGameplayCamShaking(true);apply(W.state)
+    clearDisaster(W.disaster);W.disaster=nil;StopGameplayCamShaking(true);local base=merged();apply(base)
     if restore then
-        if not controlled(W.state,'weather') then for _,name in ipairs(Config.WeatherTypes or {}) do if joaat(name)==restore.weather then SetWeatherTypeNow(name);break end end end
-        if not controlled(W.state,'wind') then SetWindSpeed(restore.wind) end
+        if not controlled(base,'weather') then for _,name in ipairs(Config.WeatherTypes or {}) do if joaat(name)==restore.weather then SetWeatherTypeNow(name);break end end end
+        if not controlled(base,'wind') then SetWindSpeed(restore.wind) end
     end
     SendNUIMessage({type='disasterState',data={active=false,name=old}})
 end)

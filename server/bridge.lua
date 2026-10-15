@@ -11,7 +11,7 @@ function B.Status()
     local out={}
     for key,list in pairs(Config.Bridges or {}) do
         local provider=firstStarted(list)
-        if key=='garage' and GetResourceState('rs-garage')=='started' then provider='rs-garage' end
+        if key=='garage' then provider=firstStarted({'rs-garage','rs-zombiegarage'}) or provider end
         out[key]={provider=provider,state=provider and 'started' or 'unavailable'}
     end
     out.framework={provider=RSAdminServer and RSAdminServer.Adapter and RSAdminServer.Adapter.Framework() or 'standalone',state='started'}
