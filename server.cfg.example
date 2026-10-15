@@ -1,0 +1,32 @@
+# rs-adminmenu v0.14.2
+# OneSync/state awareness is required.
+set onesync on
+
+# Bootstrap the first owner through ACE. Replace REPLACE_ME.
+add_principal identifier.license:REPLACE_ME group.rsowner
+add_ace group.rsowner rsadmin.owner allow
+add_ace group.rsowner rsadmin.all allow
+
+# Optional ACE-based non-owner staff permissions.
+# Persistent/custom staff groups can also be managed inside rs-adminmenu.
+add_ace group.admin rsadmin.open allow
+add_ace group.admin rsadmin.moderate allow
+add_ace group.admin rsadmin.players allow
+add_ace group.admin rsadmin.vehicles allow
+add_ace group.admin rsadmin.weapons allow
+add_ace group.admin rsadmin.world allow
+add_ace group.admin rsadmin.reports allow
+add_ace group.admin rsadmin.server allow
+add_ace group.admin rsadmin.inventory allow
+add_ace group.admin rsadmin.garage allow
+add_ace group.admin rsadmin.pranks allow
+add_ace group.admin rsadmin.spectate allow
+add_ace group.admin rsadmin.economy allow
+add_ace group.admin rsadmin.staff allow
+add_ace group.admin rsadmin.builder allow
+add_ace group.admin rsadmin.security allow
+add_ace group.admin rsadmin.logs allow
+add_ace group.admin rsadmin.punishments allow
+add_ace group.admin rsadmin.pathways allow
+
+ensure rs-adminmenu
