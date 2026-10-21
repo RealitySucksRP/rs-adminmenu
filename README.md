@@ -25,6 +25,8 @@ Server-wide disasters show their status and countdown, with owner controls to st
 
 </details>
 
+Community service uses five prison-yard digging spots with individual coordinates and headings. Press **E** to dig with a shovel for five seconds; **X** cancels without reducing the sentence. Locations and headings are editable in `Config.Punishments.communityServiceSpots`; change `communityServiceTask` for other animations, props, labels and durations.
+
 Open the menu with `/rsadmin`, the quick menu with `/fadminmenu`, and duty controls with `/aduty`.
 
 [Installation and permissions](INSTALL.md)

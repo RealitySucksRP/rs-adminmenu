@@ -30,8 +30,24 @@ local function activeService(pid)
     if not pid then return end
     for _,r in ipairs(S.community_service) do if r.identifier==pid and not r.completedAt and not r.removedAt and (tonumber(r.remaining) or 0)>0 then return r end end
 end
+local function choreDuration()
+    return math.floor(math.max(3000,math.min(15000,tonumber((Config.Punishments.communityServiceTask or {}).durationMs) or 3200)))
+end
+local function serviceSpots()
+    local cfg=Config.Punishments
+    if type(cfg.communityServiceSpots)=='table' and #cfg.communityServiceSpots>0 then return cfg.communityServiceSpots end
+    -- Preserve installations configured with the original relative offsets.
+    local base=cfg.communityServiceCoords or {};local spots={}
+    for _,off in ipairs(cfg.communityServiceOffsets or {}) do
+        spots[#spots+1]={x=(tonumber(base.x) or 0)+(tonumber(off[1]) or 0),y=(tonumber(base.y) or 0)+(tonumber(off[2]) or 0),z=tonumber(base.z) or 0,w=base.w}
+    end
+    return spots
+end
 local function syncService(t)
-    local r=activeService(C.CharacterIdentity(t)); if r then TriggerClientEvent('rs-admin:client:communityService',t,{id=r.id,remaining=r.remaining,reason=r.reason,coords=Config.Punishments.communityServiceCoords,choreIndex=tonumber(r.choreIndex) or 1,offsets=Config.Punishments.communityServiceOffsets}) end
+    local r=activeService(C.CharacterIdentity(t)); if r then
+        local spots=serviceSpots()
+        TriggerClientEvent('rs-admin:client:communityService',t,{id=r.id,remaining=r.remaining,reason=r.reason,coords=spots[1] or Config.Punishments.communityServiceCoords,choreIndex=tonumber(r.choreIndex) or 1,spots=spots,offsets=Config.Punishments.communityServiceOffsets,task=Config.Punishments.communityServiceTask,durationMs=choreDuration()})
+    end
 end
 local chores={}
 C.OnCharacterReady('communityService',syncService)
@@ -49,11 +65,11 @@ end)
 local function choreAtPlayer(src,d)
     local pid=C.CharacterIdentity(src);local r=activeService(pid)
     if not r or tonumber(r.id)~=tonumber(d.id) then return nil,'No active community service' end
-    local base=Config.Punishments.communityServiceCoords or {}; local offsets=Config.Punishments.communityServiceOffsets or {}
-    local idx=math.max(1,math.min(#offsets,tonumber(r.choreIndex) or 1)); local off=offsets[idx]
-    if not off then return nil,'Community service chore configuration missing' end
+    local spots=serviceSpots()
+    local idx=math.max(1,math.min(#spots,tonumber(r.choreIndex) or 1)); local spot=spots[idx]
+    if not spot then return nil,'Community service chore configuration missing' end
     local ped=GetPlayerPed(src); if not ped or ped==0 then return nil,'Player entity unavailable' end
-    local pos=GetEntityCoords(ped); local x=(tonumber(base.x) or 0)+(tonumber(off[1]) or 0); local y=(tonumber(base.y) or 0)+(tonumber(off[2]) or 0); local z=tonumber(base.z) or 0
+    local pos=GetEntityCoords(ped); local x=tonumber(spot.x) or 0; local y=tonumber(spot.y) or 0; local z=tonumber(spot.z) or 0
     local dx,dy,dz=pos.x-x,pos.y-y,pos.z-z; local radius=tonumber(Config.Punishments.communityServiceRadius) or 2.25
     if dx*dx+dy*dy+dz*dz > radius*radius then
         Audit(src,'SECURITY community service rejected',('chore %s distance %.2f'):format(idx,math.sqrt(dx*dx+dy*dy+dz*dz)),r.name)
@@ -65,19 +81,24 @@ H('communityService:begin',nil,function(src,d)
     local r,idx=choreAtPlayer(src,d);if not r then return Err(idx) end
     if chores[src] and GetGameTimer()<chores[src].expires then return Err('Finish the current chore first') end
     local token=('%s:%s:%s'):format(r.id,GetGameTimer(),math.random(100000,999999))
-    chores[src]={id=r.id,index=idx,session=C.SessionIdentity(src),bucket=GetPlayerRoutingBucket(src),token=token,started=GetGameTimer(),expires=GetGameTimer()+30000}
+    chores[src]={id=r.id,index=idx,session=C.SessionIdentity(src),bucket=GetPlayerRoutingBucket(src),token=token,started=GetGameTimer(),requiredMs=choreDuration(),expires=GetGameTimer()+30000}
     return Ok({token=token})
+end)
+H('communityService:cancel',nil,function(src,d)
+    local task=chores[src]
+    if task and task.id==tonumber(d.id) and task.token==d.token and task.session==C.SessionIdentity(src) then chores[src]=nil end
+    return Ok(true)
 end)
 H('communityService:complete',nil,function(src,d)
     local r,idx=choreAtPlayer(src,d);if not r then return Err(idx) end
-    local offsets=Config.Punishments.communityServiceOffsets or {}
+    local spots=serviceSpots()
     local task=chores[src];local tick=GetGameTimer()
-    if not task or task.id~=r.id or task.index~=idx or task.token~=d.token or task.session~=C.SessionIdentity(src) or task.bucket~=GetPlayerRoutingBucket(src) or tick>=task.expires or tick-task.started<3000 then return Err('Start and finish the assigned chore before claiming progress') end
+    if not task or task.id~=r.id or task.index~=idx or task.token~=d.token or task.session~=C.SessionIdentity(src) or task.bucket~=GetPlayerRoutingBucket(src) or tick>=task.expires or tick-task.started<(task.requiredMs or 3000) then return Err('Start and finish the assigned chore before claiming progress') end
     chores[src]=nil
     local now=os.time()
     r.lastComplete=now; r.remaining=math.max(0,(tonumber(r.remaining) or 0)-1)
     if r.remaining<=0 then r.completedAt=now; r.completedBy='player'; TriggerClientEvent('rs-admin:client:communityServiceStop',src,{reason='Community service complete'})
-    else r.choreIndex=(idx % #offsets)+1; syncService(src) end
+    else r.choreIndex=(idx % #spots)+1; syncService(src) end
     save('community_service'); return Ok({remaining=r.remaining,choreIndex=r.choreIndex})
 end)
 H('communityService:remove','punishments',function(src,d)
