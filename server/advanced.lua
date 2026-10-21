@@ -33,7 +33,12 @@ local function tokens(src)
     return out
 end
 local function actor(src) return src==0 and 'console' or (GetPlayerName(src) or ('#%s'):format(src)) end
-local function target(src) src=tonumber(src); return src and GetPlayerName(src) and src or nil end
+local function target(src)
+    src=tonumber(src)
+    if not src or src<1 or src%1~=0 then return end
+    -- Reject disconnected or out-of-range IDs before calling player natives.
+    for _,id in ipairs(GetPlayers()) do if tonumber(id)==src then return src end end
+end
 local function pushBounded(t,row,max)
     t[#t+1]=row; while #t>(max or 1000) do table.remove(t,1) end
 end
