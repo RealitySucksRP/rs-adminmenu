@@ -13,7 +13,7 @@ local function setHandcuffed(on)
     handcuffed=on==true; local p=PlayerPedId(); SetEnableHandcuffs(p,handcuffed); SetPedCanPlayGestureAnims(p,not handcuffed); SetPedCanSwitchWeapon(p,not handcuffed)
     if handcuffed then SetCurrentPedWeapon(p,joaat('WEAPON_UNARMED'),true) else ClearPedTasks(p) end
 end
-RegisterNetEvent('rs-admin:client:adminAction',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:adminAction',function(d)
     local action=d and d.action; local p=PlayerPedId()
     if action=='slap' then SetPedToRagdoll(p,1000,1300,0,false,false,false); ApplyForceToEntity(p,1,0.0,0.0,tonumber(d.force) or 6.0,0,0,0,0,false,true,true,false,true); notify('Slapped by staff.')
     elseif action=='handcuff' then setHandcuffed(true); notify('Handcuffed by staff.')

@@ -25,8 +25,7 @@ local function primary(src)
     return list[1]
 end
 local function jailIdentity(src)
-    local data=A and A.GetPlayerData(src)
-    return data and data.citizenid and ('character:'..data.citizenid) or primary(src)
+    return C.CharacterIdentity(src)
 end
 local function tokens(src)
     local out={}; local n=GetNumPlayerTokens(src) or 0
@@ -147,6 +146,7 @@ end
 local function syncJail(src)
     local j=activeJailForIdentifier(jailIdentity(src)); if j then TriggerClientEvent('rs-admin:client:jail',src,jailPayload(j)) end
 end
+C.OnCharacterReady('jail',syncJail)
 
 local function transaction(kind,from,to,account,amount,reason,staff,beforeFrom,afterFrom,beforeTo,afterTo)
     local row={id=('%d-%06d'):format(os.time(),math.random(0,999999)),at=os.time(),kind=kind,from=from,to=to,account=account,amount=amount,reason=reason,staff=staff,beforeFrom=beforeFrom,afterFrom=afterFrom,beforeTo=beforeTo,afterTo=afterTo}
@@ -160,7 +160,8 @@ local function transfersToday(identifier)
     return total
 end
 local function authorizeTransfer(fromSrc,toSrc,amount,account)
-    amount=math.floor(tonumber(amount) or 0); account=tostring(account or 'bank')
+    amount=tonumber(amount);if not amount or amount~=amount or math.abs(amount)==math.huge then return false,'invalid amount' end
+    amount=math.floor(amount); account=tostring(account or 'bank')
     if amount<=0 then return false,'invalid amount' end
     if amount>(Config.Economy.maxPlayerTransfer or 500000) then return false,'transfer exceeds server limit' end
     local fromId=primary(fromSrc); if not fromId then return false,'sender identifier unavailable' end
@@ -199,15 +200,17 @@ local function dashboardSummary()
     return {onlinePlayers=#players,onlineStaff=onlineStaff,vehicleCount=vehicles,openReports=openReports,activeBans=activeBans,activeJails=activeJails,onDutyStaff=onDutyStaff,kicks24h=kicks24h,totalSessions=totalSessions,averageSessionSeconds=totalSessions>0 and (totalSeconds/totalSessions) or 0,hourlyActivity=hourly,activityHeatmap=heat,cash=cash,bank=bank,totalEconomy=cash+bank,richest={players[1],players[2],players[3]},highValue=high,recentActions={table.unpack(STORE.activity,math.max(1,#STORE.activity-9),#STORE.activity)}}
 end
 RSAdminServer.Advanced={DashboardSummary=dashboardSummary, Store=STORE, Primary=primary, Target=target, Actor=actor, RoleDef=roleDef, StaffRank=staffRank, Webhook=webhook}
+RSAdminServer.Advanced.AuthorizeTransfer=authorizeTransfer
+RSAdminServer.Advanced.RecordTransaction=transaction
 
 -- Lifecycle / playtime ---------------------------------------------------------
 AddEventHandler('playerJoining',function()
-    local src=source; SetTimeout(1200,function() if GetPlayerName(src) then startSession(src); syncJail(src) end end)
+    local src=source;startSession(src)
 end)
 AddEventHandler('playerDropped',function() finishSession(source) end)
 AddEventHandler('onResourceStart',function(res)
     if res~=RESOURCE then return end
-    for _,s in ipairs(GetPlayers()) do local src=tonumber(s); startSession(src); SetTimeout(1200,function() if GetPlayerName(src) then syncJail(src) end end) end
+    for _,s in ipairs(GetPlayers()) do startSession(tonumber(s)) end
 end)
 CreateThread(function() while true do Wait((Config.Stats.updateSeconds or 60)*1000); for _,s in ipairs(GetPlayers()) do ensureStats(tonumber(s)) end; save('stats') end end)
 
@@ -259,6 +262,7 @@ end)
 H('economy:adjust','economy',function(src,d)
     local t=target(d.target); if not t then return Err('Player not found') end
     local account=Clean(d.account or 'cash',12); if not Config.Economy.accounts[account] then return Err('Account not allowed') end
+    if RSAdminServer.TransferBlocked and RSAdminServer.TransferBlocked(t,account) then return Err('Account has an active or unresolved transfer; review recovery first') end
     local mode=Clean(d.mode or 'add',12); if mode~='add' and mode~='remove' and mode~='set' then return Err('Invalid mode') end
     local amount=math.floor(tonumber(d.amount) or 0); if amount<0 or amount>(Config.Economy.maxAdminAdjustment or 5000000) then return Err('Amount outside configured limit') end
     local reason=Clean(d.reason or 'Admin adjustment',180); if amount>=(Config.Economy.requireReasonAbove or math.huge) and #reason<3 then return Err('Reason required for high value adjustment') end
@@ -266,14 +270,7 @@ H('economy:adjust','economy',function(src,d)
     local row=transaction('admin_adjust',nil,primary(t),account,amount,reason,actor(src),nil,nil,before,after); Audit(src,'economy '..mode,('%s $%s | %s'):format(account,amount,reason),GetPlayerName(t)); return Ok({balance=after,transaction=row})
 end)
 H('economy:transfer','economy',function(src,d)
-    local from=target(d.from); local to=target(d.to); if not from or not to or from==to then return Err('Invalid players') end
-    local amount=math.floor(tonumber(d.amount) or 0); local account=Clean(d.account or 'bank',12); local allowed,e=authorizeTransfer(from,to,amount,account); if not allowed then return Err(e) end
-    local reason=Clean(d.reason or 'Player transfer',180); if amount>=(Config.Economy.requireReasonAbove or math.huge) and #reason<3 then return Err('Reason required') end
-    local bf=A.GetMoney(from,account) or 0; local bt=A.GetMoney(to,account) or 0; if bf<amount then return Err('Sender has insufficient funds') end
-    local good,er=A.ChangeMoney(from,account,'remove',amount,reason); if not good then return Err(er or 'Debit failed') end
-    good,er=A.ChangeMoney(to,account,'add',amount,reason); if not good then A.ChangeMoney(from,account,'add',amount,'transfer rollback'); return Err(er or 'Credit failed; sender rolled back') end
-    local af=A.GetMoney(from,account) or (bf-amount); local at=A.GetMoney(to,account) or (bt+amount); local row=transaction('player_transfer',primary(from),primary(to),account,amount,reason,actor(src),bf,af,bt,at)
-    Audit(src,'economy transfer',('%s $%s'):format(account,amount),('%s -> %s'):format(GetPlayerName(from),GetPlayerName(to))); return Ok(row)
+    return RSAdminServer.TransferMoney(src,d)
 end)
 exports('AuthorizeTransfer',function(from,to,amount,account) return authorizeTransfer(from,to,amount,account) end)
 exports('RecordTransfer',function(from,to,amount,account,reason)
@@ -285,7 +282,8 @@ H('jail:add','moderate',function(src,d)
     local t=target(d.target); if not t then return Err('Player not found') end; if C.TargetProtected(src,t) then return Err('Owner-protected player') end
     local cells=Config.Jail.cells or {}; if #cells<1 then return Err('No jail coordinates configured') end
     local minutes=math.max(1,math.min(Config.Jail.maxMinutes or 1440,math.floor(tonumber(d.minutes) or Config.Jail.defaultMinutes or 10))); local reason=Clean(d.reason or 'Administrative jail',200); if #reason<2 then return Err('Reason required') end
-    local pid=jailIdentity(t); local current=activeJailForIdentifier(pid); if current then current.releasedAt=os.time(); current.releaseReason='Replaced by new sentence'; current.releasedBy=actor(src) end
+    local pid=jailIdentity(t);if not pid then return Err('Target character is not loaded') end
+    local current=activeJailForIdentifier(pid); if current then current.releasedAt=os.time(); current.releaseReason='Replaced by new sentence'; current.releasedBy=actor(src) end
     local j={id=(#STORE.jails+1),identifier=pid,name=GetPlayerName(t),staff=actor(src),reason=reason,minutes=minutes,created=os.time(),expires=os.time()+minutes*60,cell=math.max(1,math.min(#cells,math.floor(tonumber(d.cell) or math.random(1,#cells))))}
     STORE.jails[#STORE.jails+1]=j; save('jails'); TriggerClientEvent('rs-admin:client:jail',t,jailPayload(j)); Audit(src,'jail',('%s min | %s'):format(minutes,reason),j.name); webhook('moderation','Player jailed',{Player=j.name,Minutes=minutes,Reason=reason,Staff=actor(src)},15105570); return Ok(j)
 end)
@@ -533,8 +531,43 @@ AddEventHandler('playerConnecting',function(_,setKickReason) local src=source; f
 AddEventHandler('playerJoining',function() local src=source; SetTimeout(2200,function() if GetPlayerName(src) then TriggerClientEvent('rs-admin:client:builderSync',src,STORE.builder) end end) end)
 
 -- World / disaster state -------------------------------------------------------
+local globalDisaster,disasterSnapshot,stopGlobalDisaster
+local disasterRevision=0
 local WORLD={}; for k,v in pairs(Config.World.defaults or {}) do WORLD[k]=v end
 WORLD.overrides={}
+-- Explicit owner-pinned weather. Never store transient storms as permanent weather.
+local WEATHER_FILE='data/disaster_weather.json'
+local pinnedWeather=false
+local function copyWorld()
+    local state={overrides={}}
+    for key,value in pairs(WORLD) do if key~='overrides' then state[key]=value end end
+    for key,value in pairs(WORLD.overrides) do state.overrides[key]=value end
+    return state
+end
+local function persistWeather(state)
+    local stored={}
+    for _,key in ipairs({'weather','wind','windDirection','rain','blackout'}) do
+        if state.overrides[key] then stored[key]=state[key] end
+    end
+    local encoded=json.encode(stored)
+    local good,saved=pcall(SaveResourceFile,GetCurrentResourceName(),WEATHER_FILE,encoded,#encoded)
+    if not good or not saved then return false end
+    local readable,value=pcall(LoadResourceFile,GetCurrentResourceName(),WEATHER_FILE)
+    return readable and value==encoded
+end
+local storedWeather=LoadResourceFile(GetCurrentResourceName(),WEATHER_FILE)
+if storedWeather and storedWeather~='' then
+    local ok,data=pcall(json.decode,storedWeather)
+    if ok and type(data)=='table' then
+        local valid={}
+        for _,w in ipairs(Config.WeatherTypes or {}) do valid[w]=true end
+        if type(data.weather)=='string' and valid[data.weather] then WORLD.weather=data.weather;WORLD.overrides.weather=true;pinnedWeather=true end
+        if type(data.wind)=='number' and data.wind>=0 and data.wind<=12 then WORLD.wind=data.wind;WORLD.overrides.wind=true end
+        if type(data.windDirection)=='number' and data.windDirection>=0 and data.windDirection<=360 then WORLD.windDirection=data.windDirection;WORLD.overrides.windDirection=true end
+        if type(data.rain)=='number' and data.rain>=-1 and data.rain<=1 then WORLD.rain=data.rain;WORLD.overrides.rain=true end
+        if type(data.blackout)=='boolean' then WORLD.blackout=data.blackout;WORLD.overrides.blackout=true end
+    end
+end
 local worldEpoch=os.time()
 local function fallbackWorld()
     -- Leave established weather controllers in charge. Custom controllers can
@@ -548,7 +581,7 @@ local function fallbackWorld()
     return {enabled=true,provider='rs-adminmenu',weather=defaults.weather or 'CLEAR',rain=-1,wind=defaults.wind or 0,windDirection=defaults.windDirection or 0,hour=math.floor(minutes/60),minute=math.floor(minutes%60),second=math.floor((minutes%1)*60)}
 end
 local function worldSnapshot()
-    local state={};for key,value in pairs(WORLD) do state[key]=value end;state.fallback=fallbackWorld();return state
+    local state=copyWorld();state.fallback=fallbackWorld();state.pinnedWeather=pinnedWeather;state.disaster=disasterSnapshot and disasterSnapshot() or {active=false};return state
 end
 local function worldBroadcast(target) TriggerClientEvent('rs-admin:client:worldState',target or -1,worldSnapshot()) end
 H('world:state','world',function() return Ok(worldSnapshot()) end)
@@ -560,7 +593,14 @@ CreateThread(function()
         previous=current;Wait(1000)
     end
 end)
+local function finiteWorldNumber(value, default)
+    local n=tonumber(value)
+    if not n or n~=n or n==math.huge or n==-math.huge then return default end
+    return n
+end
 local function patchWorld(src,d)
+    if type(d)~='table' then return nil,'Invalid world request' end
+    if pinnedWeather and not Can(src,'owner') and (d.weather~=nil or d.rain~=nil or d.wind~=nil or d.windDirection~=nil or d.blackout~=nil) then return nil,'Owner-pinned weather is active; ask the owner to release it' end
     local weather
     if d.weather~=nil then
         weather=Clean(d.weather,24):upper(); local valid=false
@@ -568,55 +608,313 @@ local function patchWorld(src,d)
         if not valid then return nil,'Invalid weather' end
     end
     local allowed={weather=true,hour=true,minute=true,blackout=true,rain=true,wind=true,windDirection=true,traffic=true,parked=true,randomVehicles=true,peds=true,scenarios=true}
+    local state=copyWorld()
+    local atmosphereChanged=false
     for k,v in pairs(d or {}) do if allowed[k] then
-        WORLD.overrides[k]=true
-        if k=='weather' then WORLD.weather=weather
-        elseif k=='blackout' then WORLD.blackout=v==true
-        elseif k=='hour' then WORLD.hour=math.max(0,math.min(23,math.floor(tonumber(v) or WORLD.hour or 12)))
-        elseif k=='minute' then WORLD.minute=math.max(0,math.min(59,math.floor(tonumber(v) or WORLD.minute or 0)))
-        elseif k=='windDirection' then WORLD.windDirection=(tonumber(v) or 0)%360
-        else local hi=k=='wind' and 20.0 or 1.0; local lo=k=='rain' and -1.0 or 0.0; WORLD[k]=math.max(lo,math.min(hi,tonumber(v) or WORLD[k] or 0.0)) end
+        state.overrides[k]=true
+        if k=='weather' or k=='rain' or k=='wind' or k=='windDirection' or k=='blackout' then atmosphereChanged=true end
+        if k=='weather' then state.weather=weather
+        elseif k=='blackout' then state.blackout=v==true
+        elseif k=='hour' then state.hour=math.max(0,math.min(23,math.floor(finiteWorldNumber(v,state.hour or 12))))
+        elseif k=='minute' then state.minute=math.max(0,math.min(59,math.floor(finiteWorldNumber(v,state.minute or 0))))
+        elseif k=='windDirection' then state.windDirection=finiteWorldNumber(v,0)%360
+        else local hi=k=='wind' and 12.0 or 1.0; local lo=k=='rain' and -1.0 or 0.0; state[k]=math.max(lo,math.min(hi,finiteWorldNumber(v,state[k] or 0.0))) end
     end end
     -- A weather preset releases the previous manual rain override. Explicit
     -- rain in the same patch still wins, including a deliberate dry storm.
-    if weather and d.rain==nil then WORLD.rain=-1.0;WORLD.overrides.rain=true end
-    worldBroadcast(-1); Audit(src,'world patch',json.encode(d),'all'); webhook('world','World state changed',{Staff=actor(src),State=json.encode(d)}); return WORLD
+    if weather and d.rain==nil then state.rain=-1.0;state.overrides.rain=true end
+    -- Changes to an owner pin must survive the same restarts as the pin itself.
+    if pinnedWeather and atmosphereChanged and not persistWeather(state) then return nil,'Could not save pinned weather; world state was not changed' end
+    WORLD=state
+    worldBroadcast(-1); Audit(src,'world patch',json.encode(d),'all'); webhook('world','World state changed',{Staff=actor(src),State=json.encode(d)}); return worldSnapshot()
 end
 RSAdminServer.PatchWorld=patchWorld
 H('world:patch','world',function(src,d)
     local result,e=patchWorld(src,d); return result and Ok(result) or Err(e)
 end)
-H('world:release','world',function(src)
-    WORLD.overrides={};worldBroadcast(-1);Audit(src,'release world overrides','','world');return Ok(WORLD)
+local function releaseWorld(src)
+    if pinnedWeather and not Can(src,'owner') then return Err('Owner required to release pinned weather') end
+    if not persistWeather({overrides={}}) then return Err('Could not clear saved weather; world state was not changed') end
+    WORLD={overrides={}};for key,value in pairs(Config.World.defaults or {}) do WORLD[key]=value end
+    pinnedWeather=false
+    worldBroadcast(-1);Audit(src,'release world overrides','','world');return Ok(worldSnapshot())
+end
+H('world:release','world',releaseWorld)
+H('world:holdWeather','owner',function(src,d)
+    if type(d)~='table' then return Err('Invalid weather request') end
+    local weather=Clean(d.weather or '',24):upper()
+    local allowed=false
+    for _,name in ipairs(Config.WeatherTypes or {}) do if weather==name then allowed=true break end end
+    if not allowed then return Err('Invalid weather name') end
+    local wind=tonumber(d.wind)
+    if not wind or wind~=wind or wind<0 or wind>12 then return Err('Wind must be 0-12 m/s') end
+    local rain=tonumber(d.rain)
+    if not rain or rain~=rain or rain < -1 or rain>1 then return Err('Rain must be -1 to 1') end
+    local direction=tonumber(d.windDirection)
+    if not direction or direction~=direction or direction < 0 or direction>360 then return Err('Direction must be 0-360') end
+    local state=copyWorld()
+    for _,key in ipairs({'weather','wind','rain','windDirection'}) do state.overrides[key]=true end
+    state.weather=weather;state.wind=wind;state.rain=rain;state.windDirection=direction
+    if not persistWeather(state) then return Err('Could not persist weather to resource storage') end
+    WORLD=state
+    pinnedWeather=true
+    worldBroadcast(-1)
+    Audit(src,'hold permanent weather',weather,'world')
+    return Ok(worldSnapshot())
 end)
+local function disasterNumber(value, default, low, high)
+    local n=tonumber(value)
+    if not n or n~=n or n==math.huge or n==-math.huge then n=default end
+    return math.max(low,math.min(high,n))
+end
 local DISASTER_NAMES={blackout=true,thunderstorm=true,hurricane=true,blizzard=true,sandstorm=true,toxicfog=true,earthquake=true,meteor=true,tornado=true,firestorm=true,emp=true,tsunami=true}
 local activeDisasters={}
-H('disaster:start','world',function(src,d)
-    local name=Clean(d.name,32):lower(); if not DISASTER_NAMES[name] then return Err('Unknown disaster') end; local scope=Clean(d.scope or 'self',16):lower(); local dst=(scope=='all') and -1 or src
-    if scope=='all' and Config.Disasters.requireOwnerForGlobalDangerous and Config.Disasters.dangerous[name] and not (Can(src,'owner') or Can(src,'developer')) then return Err('Owner/developer required for global dangerous event') end
-    local payload={name=name,seconds=math.max(5,math.min(Config.Disasters.maxSeconds or 120,math.floor(tonumber(d.seconds) or 30))),intensity=math.max(0.1,math.min(1.0,tonumber(d.intensity) or .65)),damage=(d.damage==true and Config.Disasters.allowDamage==true),by=actor(src)}
-    if name=='tornado' then
-        local ped=GetPlayerPed(src);if ped==0 then return Err('Staff character unavailable') end
-        local c=GetEntityCoords(ped);local heading=math.rad(GetEntityHeading(ped));payload.origin={x=c.x-math.sin(heading)*15.0,y=c.y+math.cos(heading)*15.0,z=c.z};payload.affectedVehicles={}
-        if d.affectEntities==true then
-            if not Can(src,'owner') then return Err('Owner required for storm vehicle physics') end
-            local candidates=cleanupMatches(src,{mode='radius',radius=80})
-            for i,row in ipairs(candidates or {}) do if i>24 then break end;payload.affectedVehicles[#payload.affectedVehicles+1]={netId=row.stamp.net,plate=row.stamp.plate,model=row.stamp.model} end
+local syncCooldown={}
+local meteorEvent=nil
+disasterSnapshot=function()
+    if not globalDisaster then return {active=false} end
+    local p=globalDisaster.payload
+    return {active=true,id=p.eventId,name=p.name,by=p.by,started=p.started,expires=globalDisaster.expires,remaining=math.max(0,globalDisaster.expires-os.time()),intensity=p.intensity,scope='all'}
+end
+local function broadcastDisasterStatus() TriggerClientEvent('rs-admin:client:disasterStatus',-1,disasterSnapshot()) end
+stopGlobalDisaster=function(reason,expectedId)
+    if expectedId and (not globalDisaster or globalDisaster.payload.eventId~=expectedId) then return false end
+    disasterRevision=disasterRevision+1
+    activeDisasters={};globalDisaster=nil;meteorEvent=nil
+    TriggerClientEvent('rs-admin:client:disasterStop',-1,{reason=reason or 'Stopped by staff'})
+    worldBroadcast(-1);broadcastDisasterStatus()
+    return true
+end
+RSAdminServer.StopDisaster=stopGlobalDisaster
+H('disaster:state','world',function() return Ok(disasterSnapshot()) end)
+H('world:reset','owner',function(src)
+    local result=releaseWorld(src);if not result.ok then return result end
+    if RSAdminOperations and RSAdminOperations.CancelMaintenance then RSAdminOperations.CancelMaintenance(src) end
+    stopGlobalDisaster('Normal world control restored')
+    Audit(src,'reset world and disaster','','world')
+    return Ok(worldSnapshot())
+end)
+local function replayGlobalDisaster(src)
+    if not globalDisaster then return end
+    local remaining=globalDisaster.expires-os.time()
+    if remaining<=0 then return end
+    local payload={}
+    for k,v in pairs(globalDisaster.payload) do payload[k]=v end
+    payload.seconds=remaining
+    payload.elapsed=globalDisaster.payload.seconds-remaining
+    activeDisasters[src]={identity=jailIdentity(src),expires=globalDisaster.expires}
+    TriggerClientEvent('rs-admin:client:disaster',src,payload)
+end
+local function startDisaster(src,d)
+    if not Can(src,'world') then return Err('Permission denied') end
+    if src~=0 and RSAdminOperations and RSAdminOperations.MaintenanceActive and RSAdminOperations.MaintenanceActive() then return Err('Cancel tsunami maintenance before starting another disaster') end
+    local requestSession=src==0 and 'console' or C.SessionIdentity(src)
+    if not requestSession then return Err('Staff character is not loaded') end
+    local name=Clean(d.name,32):lower()
+    if not DISASTER_NAMES[name] then return Err('Unknown disaster') end
+    local scope=Clean(d.scope or 'all',16):lower()
+    if scope~='all' then return Err('Disasters only support Entire Server scope') end
+    if scope=='all' and Config.Disasters.requireOwnerForGlobalDangerous and Config.Disasters.dangerous[name] and not (Can(src,'owner') or Can(src,'developer')) then
+        return Err('Owner/developer required for global dangerous event')
+    end
+    local physicsRequested=(d.affectEntities==true or d.affectPeds==true or d.affectPlayers==true)
+    if physicsRequested and name~='tornado' and name~='hurricane' then return Err('Physical gusts only support tornado or hurricane') end
+    if physicsRequested and not Can(src,'owner') then return Err('Owner required for physical gusts') end
+    if d.affectPlayers==true and not (Config.Disasters.allowDamage==true or Can(src,'owner')) then return Err('Owner required for player ragdolls') end
+    local cfg=Config.Disasters.physics or {}
+    local payload={
+        name=name,scope=scope,
+        seconds=math.floor(disasterNumber(d.seconds,30,5,Config.Disasters.maxSeconds or 120)),
+        intensity=disasterNumber(d.intensity,.65,.1,1.0),
+        damage=(d.damage==true and Config.Disasters.allowDamage==true),
+        by=actor(src),
+        previewOperator=Can(src,'owner') and src or nil,
+        gustDirection=disasterNumber(d.gustDirection,0,0,360)%360,
+        gustSeed=math.random(10000,999999), -- replicated once; late join gets same gust timeline
+        lift=disasterNumber(d.lift,.65,0,1),
+        radius=disasterNumber(d.radius,55,15,math.min(80,cfg.maxRadius or 80)),
+        travelSpeed=name=='tornado' and disasterNumber(d.travelSpeed,3.5,0,8) or 0, -- metres/second, server bounded
+        affectPeds=d.affectPeds==true and physicsRequested,
+        affectPlayers=d.affectPlayers==true and physicsRequested,
+        cinematicCars=(d.cinematicCars==true and scope=='all' and Can(src,'owner') and (name=='tornado' or name=='hurricane')),
+        cinematicCows=(d.cinematicCows==true and scope=='all' and Can(src,'owner') and (name=='tornado' or name=='hurricane')),
+        cinematicImpacts=(d.cinematicImpacts==true and d.cinematicCars==true and scope=='all' and Can(src,'owner') and (name=='tornado' or name=='hurricane')),
+        destructiveTraffic=(d.destructiveTraffic==true and d.affectEntities==true and d.cinematicImpacts==true and d.cinematicCars==true and scope=='all' and Can(src,'owner')), 
+        surge=(d.surge==true and scope=='all' and name=='hurricane' and Can(src,'owner')),
+        affectEntities=d.affectEntities==true and physicsRequested,
+        style=(({serious=true,funny=true,extreme=true})[d.style]) and d.style or "serious"
+    }
+    disasterRevision=disasterRevision+1;local requestRevision=disasterRevision
+    if name=='tornado' or name=='hurricane' or name=='meteor' then
+        local ped=GetPlayerPed(src)
+        if not ped or ped==0 then return Err('Staff character unavailable') end
+        local c=GetEntityCoords(ped)
+        local heading=math.rad(GetEntityHeading(ped))
+        local distance=name=='hurricane' and 125.0 or 15.0
+        payload.origin={x=c.x-math.sin(heading)*distance,y=c.y+math.cos(heading)*distance,z=c.z}
+        payload.affectedVehicles={}
+        if name=='meteor' then payload.origin={x=c.x,y=c.y,z=c.z};payload.meteorSeed=math.random(10000,999999) end
+        if payload.affectEntities then
+            -- This deliberately fails closed if a supported owned-vehicle registry
+            -- cannot verify that each candidate is not owned by a player.
+            local candidates,e,unverified=cleanupMatches(src,{mode='radius',radius=80})
+            if not candidates then return Err(e or 'Vehicle verification failed') end
+            payload.vehicleCandidates=#candidates;payload.unverifiedVehicles=unverified or 0
+            for _,row in ipairs(candidates) do
+                if #payload.affectedVehicles >= math.min(24,cfg.maxVehicles or 24) then break end
+                local st=row.stamp
+                if st.net and st.net>0 then
+                    payload.affectedVehicles[#payload.affectedVehicles+1]={netId=st.net,plate=st.plate,model=st.model,bucket=st.bucket}
+                end
+            end
         end
     end
-    for _,player in ipairs(dst==-1 and GetPlayers() or {src}) do local id=tonumber(player);activeDisasters[id]={identity=jailIdentity(id),expires=os.time()+payload.seconds} end
-    TriggerClientEvent('rs-admin:client:disaster',dst,payload); Audit(src,'disaster '..name,('%s %ss'):format(scope,payload.seconds),'world'); webhook('disasters','Disaster simulation started',{Type=name,Scope=scope,Seconds=payload.seconds,Intensity=payload.intensity,Staff=actor(src)},16744192); return Ok(payload)
+    -- Only the initiator can submit meteor contacts. Visuals are broadcast once;
+    -- eligible real cars are independently verified by the existing owner registry.
+    if name=='meteor' then
+        payload.meteorController=src
+        payload.meteorSession=math.random(100000,999999999)
+        local candidates=cleanupMatches(src,{mode='radius',radius=math.min(110,tonumber((Config.Disasters.meteor or {}).radius) or 88)})
+        local known={}
+        if type(candidates)=='table' then
+            for _,entry in ipairs(candidates) do
+                if #known>=24 then break end
+                local stamp=entry.stamp
+                if stamp and stamp.net and stamp.net>0 then
+                    known[#known+1]={netId=stamp.net,plate=stamp.plate,model=stamp.model,bucket=stamp.bucket}
+                end
+            end
+        end
+        payload.meteorCandidates=known
+    end
+    if requestRevision~=disasterRevision or (src~=0 and C.SessionIdentity(src)~=requestSession) or not Can(src,'world') then return Err('Disaster request expired or staff session changed') end
+    if physicsRequested and not Can(src,'owner') then return Err('Owner permission changed during vehicle verification') end
+    if Config.Disasters.requireOwnerForGlobalDangerous and Config.Disasters.dangerous[name] and not (Can(src,'owner') or Can(src,'developer')) then return Err('Disaster permission changed') end
+    payload.eventId=requestRevision;payload.started=os.time();payload.expires=os.time()+payload.seconds
+    if name=='meteor' then
+        meteorEvent={source=src,identity=C.SessionIdentity(src),session=payload.meteorSession,
+            expires=os.time()+payload.seconds,scope=scope,origin=payload.origin,
+            vehicles=payload.meteorCandidates,lastTick=0,count=0,used={}}
+        payload.meteorCandidates=nil
+    else
+        meteorEvent=nil
+    end
+    for _,player in ipairs(GetPlayers()) do
+        local id=tonumber(player)
+        activeDisasters[id]={identity=jailIdentity(id),expires=os.time()+payload.seconds}
+    end
+    globalDisaster={payload=payload,expires=os.time()+payload.seconds}
+    TriggerClientEvent('rs-admin:client:disaster',-1,payload)
+    broadcastDisasterStatus()
+    if name=='tornado' or name=='hurricane' then print(('[rs-adminmenu][storm] %s scope=%s realVehicles=%d unverified=%d npc=%s stuntCars=%s'):format(name,scope,#(payload.affectedVehicles or {}),payload.unverifiedVehicles or 0,tostring(payload.affectPeds),tostring(payload.cinematicCars))) end
+    Audit(src,'disaster '..name,('%s %ss'):format(scope,payload.seconds),'world')
+    webhook('disasters','Disaster simulation started',{Type=name,Scope=scope,Seconds=payload.seconds,Intensity=payload.intensity,Staff=actor(src)},16744192)
+    return Ok(payload)
+end
+RSAdminServer.StartDisaster=startDisaster
+H('disaster:start','world',startDisaster)
+-- A client cannot choose a target vehicle or broadcast a damaging blast.
+-- Only the owner/developer who started the active meteor event can submit a
+-- bounded ground/structure contact; local actors receive visual-only blasts.
+RegisterNetEvent('rs-admin:server:meteorImpact',function(hit)
+    local src=source
+    local e=meteorEvent
+    if not e or src~=e.source or not GetPlayerName(src) or
+       C.SessionIdentity(src)~=e.identity or
+       not (Can(src,'owner') or Can(src,'developer')) or
+       os.time()>=e.expires or e.count>=48 or type(hit)~='table' or
+       tonumber(hit.session)~=e.session then return end
+    local index=tonumber(hit.index)
+    local x,y,z=tonumber(hit.x),tonumber(hit.y),tonumber(hit.z)
+    if not index or index~=math.floor(index) or index<1 or index>48 or e.used[index] then return end
+    if not x or not y or not z or x~=x or y~=y or z~=z or
+       math.abs(x)>10000 or math.abs(y)>10000 or math.abs(z)>1200 then return end
+    local dx,dy=x-e.origin.x,y-e.origin.y
+    local radius=math.min(115,math.max(20,tonumber((Config.Disasters.meteor or {}).radius) or 88))
+    if dx*dx+dy*dy>(radius+7)^2 or math.abs(z-e.origin.z)>115 then return end
+    local now=GetGameTimer()
+    if now-e.lastTick<900 then return end
+    e.lastTick=now;e.count=e.count+1;e.used[index]=true
+    local verified={}
+    for _,row in ipairs(e.vehicles) do
+        local v=NetworkGetEntityFromNetworkId(row.netId)
+        if v and v~=0 and DoesEntityExist(v) and
+           sameVehicle(v,{net=row.netId,plate=row.plate,model=row.model,bucket=row.bucket}) and
+           vehicleOwned(v)==false then
+            local occupied=occupiedVehicles()
+            if meteorEvent~=e or os.time()>=e.expires or C.SessionIdentity(src)~=e.identity then return end
+            if occupied and not occupied[v] and sameVehicle(v,{net=row.netId,plate=row.plate,model=row.model,bucket=row.bucket}) and GetPedInVehicleSeat(v,-1)==0 then
+            local c=GetEntityCoords(v)
+            if (c.x-x)^2+(c.y-y)^2<13^2 and math.abs(c.z-z)<7 then
+                verified[#verified+1]=row
+                if #verified>=5 then break end
+            end
+            end
+        end
+    end
+    local meteorCfg=(Config.Disasters or {}).meteor or {}
+    if meteorEvent~=e or os.time()>=e.expires or C.SessionIdentity(src)~=e.identity then return end
+    if e.scope=='all' and meteorCfg.damagePlayers==true and Config.Disasters.allowDamage==true then
+        local impactBucket=GetPlayerRoutingBucket(e.source)
+        for _,player in ipairs(GetPlayers()) do
+            local id=tonumber(player)
+            if id and id~=e.source and not Can(id,'owner') and
+               GetPlayerRoutingBucket(id)==impactBucket then
+                local ped=GetPlayerPed(id)
+                if ped and ped~=0 and DoesEntityExist(ped) then
+                    local c=GetEntityCoords(ped)
+                    local diff=(c.x-x)^2+(c.y-y)^2
+                    if diff<10^2 and math.abs(c.z-z)<7 then
+                        local damage=math.floor(105*(1-math.sqrt(diff)/10))
+                        if damage>0 then SetEntityHealth(ped,math.max(0,GetEntityHealth(ped)-damage)) end
+                    end
+                end
+            end
+        end
+    end
+    TriggerClientEvent('rs-admin:client:meteorImpact',e.scope=='all' and -1 or src,
+        {x=x,y=y,z=z,index=index,session=e.session,verifiedVehicles=verified,
+         owner=e.source})
 end)
-H('disaster:stop','world',function(src,d) local scope=Clean(d.scope or 'self',16);if scope=='all' then activeDisasters={} else activeDisasters[src]=nil end; TriggerClientEvent('rs-admin:client:disasterStop',scope=='all' and -1 or src,{}); worldBroadcast(scope=='all' and -1 or src); Audit(src,'disaster stop',scope,'world'); return Ok(true) end)
+H('disaster:stop','world',function(src,d)
+    local scope=Clean(d.scope or 'all',16):lower()
+    if scope~='all' then return Err('Disasters only support Entire Server scope') end
+    if not Can(src,'owner') then return Err('Owner required to stop a global disaster') end
+    if not stopGlobalDisaster('Stopped by '..actor(src),d.eventId) then return Err('The active event changed; refresh before stopping it') end
+    Audit(src,'disaster stop',scope,'world')
+    return Ok(true)
+end)
 CreateThread(function()
     while true do Wait(1000);local now=os.time()
+        if globalDisaster and now>=globalDisaster.expires then stopGlobalDisaster('Event timer completed',globalDisaster.payload.eventId) end
         for id,storm in pairs(activeDisasters) do
             if not GetPlayerName(id) or jailIdentity(id)~=storm.identity then activeDisasters[id]=nil
             elseif now>=storm.expires then activeDisasters[id]=nil;TriggerClientEvent('rs-admin:client:disasterStop',id,{});worldBroadcast(id) end
         end
     end
 end)
-AddEventHandler('playerJoining',function() local src=source; SetTimeout(1800,function() if GetPlayerName(src) then worldBroadcast(src) end end) end)
+AddEventHandler('playerJoining',function()
+    local src=source
+    SetTimeout(1800,function()
+        if GetPlayerName(src) then worldBroadcast(src);replayGlobalDisaster(src) end
+    end)
+end)
+-- Client script restart / late load: state read only, checked by server.
+RegisterNetEvent('rs-admin:server:disasterSync',function()
+    local src=source
+    if not src or src<=0 or not GetPlayerName(src) then return end
+    local now=os.time()
+    if (syncCooldown[src] or 0)>now then return end
+    syncCooldown[src]=now+5
+    worldBroadcast(src)
+    replayGlobalDisaster(src)
+end)
+AddEventHandler('playerDropped',function()
+    syncCooldown[source]=nil
+    activeDisasters[source]=nil
+    if meteorEvent and meteorEvent.source==source then stopGlobalDisaster('Meteor controller disconnected') end
+end)
+C.OnCharacterReady('world',function(src) worldBroadcast(src);replayGlobalDisaster(src) end)
 
 -- Expire jail/staff state without client authority.
 CreateThread(function()

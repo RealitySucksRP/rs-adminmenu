@@ -268,8 +268,8 @@ end
 
 function A.GiveKeys(target, vehicle)
     if GetResourceState('qbx_vehiclekeys')=='started' then
-        pcall(function() exports.qbx_vehiclekeys:GiveKeys(target, vehicle, true) end)
-        return true
+        local ok,result=pcall(function() return exports.qbx_vehiclekeys:GiveKeys(target, vehicle, true) end)
+        return ok and result~=false,not ok and tostring(result) or nil
     end
     if GetResourceState('qb-vehiclekeys')=='started' then
         local plate=GetVehicleNumberPlateText(vehicle)
@@ -308,12 +308,12 @@ function A.ChangeMoney(src, account, mode, amount, reason)
             if mode=='set' then return exports.qbx_core:SetMoney(src,account,amount,why) end
             return false
         end)
-        return ok and res~=false, ok and nil or tostring(res)
+        return ok and res==true,not ok and tostring(res) or (res~=true and 'Money provider did not confirm the change' or nil),not ok or res==nil
     end
     local data,p=A.GetPlayerData(src); if not p then return false,'player not found' end
     if framework=='qbcore' and p.Functions then
         local map={add='AddMoney',remove='RemoveMoney',set='SetMoney'}; local fn=map[mode]
-        if fn and p.Functions[fn] then local ok,res=pcall(function() return p.Functions[fn](account,amount,reason or 'rs-adminmenu') end); return ok and res~=false, ok and nil or tostring(res) end
+        if fn and p.Functions[fn] then local ok,res=pcall(function() return p.Functions[fn](account,amount,reason or 'rs-adminmenu') end); return ok and res==true,not ok and tostring(res) or (res~=true and 'Money provider did not confirm the change' or nil),not ok or res==nil end
     elseif framework=='esx' then
         local ok,res=pcall(function()
             if account=='cash' then

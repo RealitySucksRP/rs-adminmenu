@@ -4,6 +4,7 @@ local DATA = {
     bans = {}, reports = {}, presets = {}, audit = {}
 }
 local rate = {}
+local inFlight={}
 local rejectedLogAt = {}
 local handlers = {}
 local privateBuckets = {}
@@ -153,6 +154,18 @@ local function entityWithinRange(src, ent, maxDistance)
     local dx,dy,dz=a.x-b.x,a.y-b.y,a.z-b.z
     return (dx*dx+dy*dy+dz*dz) <= (maxDistance*maxDistance)
 end
+local function protectedVehicleOccupant(src,vehicle)
+    for _,id in ipairs(GetPlayers()) do
+        local player=tonumber(id);local ped=GetPlayerPed(player)
+        if ped and ped~=0 and GetVehiclePedIsIn(ped,false)==vehicle and targetProtected(src,player) then return true end
+    end
+    return false
+end
+local function entityAccess(src,ent)
+    if GetEntityRoutingBucket(ent)~=GetPlayerRoutingBucket(src) then return false,'Entity is in another routing bucket' end
+    if GetEntityType(ent)==2 and protectedVehicleOccupant(src,ent) then return false,'Owner-protected player is inside this vehicle' end
+    return true
+end
 
 local function permissionMap(src)
     local out = {}
@@ -206,13 +219,15 @@ local function validRpcPayload(root)
                 if type(k)=='string' then
                     if #k>128 then return false end
                     bytes=bytes+#k
-                elseif type(k)~='number' then return false end
+                elseif type(k)~='number' or k~=k or k==math.huge or k==-math.huge then return false end
                 local kind=type(item)
                 if kind=='string' then
                     if #item>(security.maxRpcStringBytes or 16384) then return false end
                     bytes=bytes+#item
                 elseif kind=='table' then
                     stack[#stack+1]={value=item,depth=entry.depth+1}
+                elseif kind=='number' and (item~=item or item==math.huge or item==-math.huge) then
+                    return false
                 elseif kind~='number' and kind~='boolean' and kind~='nil' then
                     return false
                 end
@@ -250,8 +265,10 @@ end
 RSAdminCore = {
     Handle=handle, Can=can, TargetProtected=targetProtected, Audit=audit, Clean=clean,
     Ok=ok, Err=err, Relay=relay, Data=DATA, SaveJson=saveJson, FlushJson=flushJson,
+    SaveCriticalJson=function(name,value) saveJson(name,value);return dirtyJson[name]==nil end,
     Identifiers=identifiers, PermissionMap=permissionMap, PlayerSummary=nil,LoadJson=loadJson
 }
+RSAdminCore.ProtectedVehicleOccupant=protectedVehicleOccupant
 
 local function reportIdentity(src)
     local data=Adapter and Adapter.GetPlayerData(src)
@@ -494,21 +511,40 @@ handle('weapon:all', 'weapons', function(src)
     return ok(true)
 end)
 
-handle('weapon:removeAll', 'weapons', function(src)
+local function removePlayerWeapons(targetId)
+    local session=RSAdminCore.SessionIdentity(targetId)
+    if not session then return nil,'Target character is not loaded' end
     if useOxWeapons() then
+        local readable,items=pcall(function() return exports.ox_inventory:GetInventoryItems(targetId) end)
+        if not readable or type(items)~='table' then return nil,'Inventory provider unavailable; no weapons removed' end
         local count,failed=0,0
-        for _,item in ipairs(Adapter.GetInventory(src)) do
-            if oxWeaponDetails(item.name) then
-                local success=Adapter.RemoveItem(src,item.name,item.count,item.metadata,item.slot)
-                if success then count=count+item.count else failed=failed+item.count end
+        local weapons={}
+        for _,item in pairs(items) do
+            if type(item)=='table' and oxWeaponDetails(item.name) then
+                weapons[#weapons+1]={name=item.name,count=item.count,metadata=item.metadata,slot=item.slot}
             end
         end
-        audit(src,'remove inventory weapons',('%d removed, %d failed'):format(count,failed),GetPlayerName(src))
-        if failed>0 then return err(('%d weapon(s) removed, %d could not be removed'):format(count,failed)) end
-        return ok({count=count,delivery='inventory'})
+        for _,item in ipairs(weapons) do
+            if RSAdminCore.SessionIdentity(targetId)~=session then return nil,('Target session changed; %d weapon(s) removed before disconnect'):format(count) end
+            local amount=math.max(0,math.floor(tonumber(item.count) or 0))
+            if amount>0 then
+                local success=Adapter.RemoveItem(targetId,item.name,amount,item.metadata,item.slot)
+                if success then count=count+amount else failed=failed+amount end
+            end
+        end
+        if RSAdminCore.SessionIdentity(targetId)~=session then return nil,'Target session changed during removal' end
+        TriggerClientEvent('ox_inventory:disarm',targetId,true)
+        if failed>0 then return nil,('%d weapon(s) removed, %d could not be removed'):format(count,failed) end
+        return {count=count,delivery='inventory'}
     end
-    TriggerClientEvent('rs-admin:client:weapon',src,{action='removeAll'})
-    return ok(true)
+    TriggerClientEvent('rs-admin:client:weapon',targetId,{action='removeAll'})
+    return {delivery='native'}
+end
+RSAdminServer.RemovePlayerWeapons=removePlayerWeapons
+handle('weapon:removeAll', 'weapons', function(src)
+    local result,e=removePlayerWeapons(src)
+    audit(src,'remove inventory weapons',result and ('delivery '..result.delivery) or e,GetPlayerName(src))
+    return result and ok(result) or err(e)
 end)
 
 handle('weapon:maxAmmo', 'weapons', function(src)
@@ -554,11 +590,12 @@ handle('vehicle:deleteNet', 'vehicles', function(src,d)
     if ent==0 or not DoesEntityExist(ent) then return err('Entity not found') end
     if GetEntityType(ent)~=2 then return err('Target is not a vehicle') end
     if not entityWithinRange(src,ent,Config.Security.maxEntityDistance or 300.0) then return err('Vehicle is too far away') end
+    local allowed,reason=entityAccess(src,ent);if not allowed then return err(reason) end
     if GetResourceState('qbx_core')=='started' then
         pcall(function() exports.qbx_core:DisablePersistence(ent) end)
         local done=false
         pcall(function() done=exports.qbx_core:DeleteVehicle(ent)==true end)
-        if not done and DoesEntityExist(ent) then DeleteEntity(ent) end
+        if not done and DoesEntityExist(ent) then local safe=entityAccess(src,ent);if safe then DeleteEntity(ent) else return err('Vehicle access changed during deletion') end end
     else
         DeleteEntity(ent)
     end
@@ -571,6 +608,7 @@ handle('entity:deleteNet', 'developer', function(src,d)
     if ent==0 or not DoesEntityExist(ent) then return err('Entity not found') end
     if isPlayerPedEntity(ent) then return err('Player peds cannot be deleted') end
     if not entityWithinRange(src,ent,Config.Security.maxEntityDistance or 300.0) then return err('Entity is too far away') end
+    local allowed,reason=entityAccess(src,ent);if not allowed then return err(reason) end
     DeleteEntity(ent)
     audit(src,'delete world entity',('net:%s type:%s'):format(net,GetEntityType(ent)),'')
     return ok(true)
@@ -781,11 +819,30 @@ RegisterNetEvent('rs-admin:server:rpc', function(name,reqId,data)
         auditRejected(src,'INVALID PAYLOAD',name)
         TriggerClientEvent('rs-admin:client:rpc',src,reqId,err('Invalid request payload')); return
     end
+    local session=RSAdminCore.SessionIdentity(src)
+    if not session then TriggerClientEvent('rs-admin:client:rpc',src,reqId,err('Character is not loaded yet'));return end
+    local pending=inFlight[src]
+    if not pending or pending.session~=session then pending={session=session,count=0,ids={},completed={},order={}};inFlight[src]=pending end
+    local completed=pending.completed[reqId]
+    if completed and GetGameTimer()<completed.expires then
+        TriggerClientEvent('rs-admin:client:rpc',src,reqId,completed.name==name and completed.response or err('Request ID was already used'));return
+    end
+    if pending.ids[reqId] or pending.count>=4 then
+        TriggerClientEvent('rs-admin:client:rpc',src,reqId,err('Another request is still running'));return
+    end
+    pending.ids[reqId]=true;pending.count=pending.count+1
     local good,res=pcall(h.fn,src,data)
+    pending.ids[reqId]=nil;pending.count=pending.count-1
     if not good then print(('[rs-adminmenu] handler %s error: %s'):format(name,res)); res=err('Internal error') end
     local persisted,failed=flushJson()
     if not persisted and res and res.ok then res.persistenceWarning='Action applied; disk save pending for '..table.concat(failed,', ') end
-    TriggerClientEvent('rs-admin:client:rpc',src,reqId,res or ok(true))
+    if RSAdminCore.SessionIdentity(src)==session then
+        local response=res or ok(true)
+        if not pending.completed[reqId] then pending.order[#pending.order+1]=reqId end
+        pending.completed[reqId]={name=name,response=response,expires=GetGameTimer()+15000}
+        while #pending.order>32 do pending.completed[table.remove(pending.order,1)]=nil end
+        TriggerClientEvent('rs-admin:client:rpc',src,reqId,response)
+    end
 end)
 
 RegisterCommand(Config.Command,function(src,args)
@@ -820,6 +877,7 @@ AddEventHandler('playerConnecting',function(name,setKickReason)
 end)
 
 AddEventHandler('playerDropped',function()
+    inFlight[source]=nil
     rate[source]=nil
     rejectedLogAt[source]=nil
     reportCooldown[source]=nil

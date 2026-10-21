@@ -8,7 +8,7 @@ local function feed(title,msg)
     EndTextCommandThefeedPostTicker(false,false)
 end
 
-RegisterNetEvent('rs-admin:client:pathwayNotify',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:pathwayNotify',function(d)
     feed(d and d.title or 'PATHWAYS',d and d.message or '')
 end)
 
@@ -17,7 +17,7 @@ local function clearRoute()
     currentBlip=nil
 end
 
-RegisterNetEvent('rs-admin:client:pathwayRoute',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:pathwayRoute',function(d)
     if not d or not d.x or not d.y then return end
     clearRoute()
     SetNewWaypoint(tonumber(d.x)+0.0,tonumber(d.y)+0.0)
@@ -26,11 +26,11 @@ RegisterNetEvent('rs-admin:client:pathwayRoute',function(d)
     feed('NEXT OBJECTIVE',('%s\nGPS route updated.'):format(tostring(d.label or 'Objective')))
 end)
 
-RegisterNetEvent('rs-admin:client:pathwayObjective',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:pathwayObjective',function(d)
     if d and d.step then feed(tostring(d.label or 'PATHWAY'),('Next: %s'):format(tostring(d.step.label or 'Objective'))) end
 end)
 
-RegisterNetEvent('rs-admin:client:pathwayStatus',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:pathwayStatus',function(d)
     local s=d and d.state or {}; local step=s.currentStep
     local text=('%s\n%s / %s points · %s / %s steps'):format(tostring(s.label or 'Pathway'),tostring(s.points or 0),tostring(s.requiredPoints or 0),tostring(s.completedCount or 0),tostring(s.totalSteps or 0))
     if step then text=text..('\nNext: %s'):format(tostring(step.label or 'Objective')) end

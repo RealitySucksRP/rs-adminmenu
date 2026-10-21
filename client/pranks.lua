@@ -17,7 +17,7 @@ local function resetPranks()
 end
 RSAdmin.Pranks.Reset=resetPranks
 
-RegisterNetEvent('rs-admin:client:prank',function(d)
+local function applyPrank(d)
     local action=tostring(d.action or '')
     local seconds=math.max(1,math.min(30,tonumber(d.seconds) or 8))
     local ped=PlayerPedId(); local pid=PlayerId()
@@ -64,7 +64,9 @@ RegisterNetEvent('rs-admin:client:prank',function(d)
         local v=GetVehiclePedIsIn(ped,false)
         if v~=0 then SetEntityAngularVelocity(v,0.0,0.0,5.5) end
     end
-end)
+end
+RSAdmin.ApplyPrank=applyPrank
+RSAdmin.RegisterServerEvent('rs-admin:client:prank',applyPrank)
 
 AddEventHandler('onResourceStop',function(res)
     if res~=GetCurrentResourceName() then return end

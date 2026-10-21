@@ -34,7 +34,7 @@ RSAdmin.Spectate.Stop=function()
     if S.active then RSAdmin.RPC('spectate:stop',{},function() end) end
 end
 
-RegisterNetEvent('rs-admin:client:spectateStart',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:spectateStart',function(d)
     stopLocal()
     local ped=PlayerPedId()
     S.coords=GetEntityCoords(ped); S.heading=GetEntityHeading(ped); S.target=tonumber(d.target); S.active=true
@@ -59,7 +59,7 @@ RegisterNetEvent('rs-admin:client:spectateStart',function(d)
     end)
 end)
 
-RegisterNetEvent('rs-admin:client:spectateStop',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:spectateStop',function(d)
     stopLocal(d and d.reason)
 end)
 

@@ -1,4 +1,10 @@
 RSAdmin = RSAdmin or {}
+function RSAdmin.RegisterServerEvent(name,fn)
+    RegisterNetEvent(name,function(...)
+        if source~=65535 then return end
+        return fn(...)
+    end)
+end
 RSAdmin.permissions = {}
 RSAdmin.open = false
 RSAdmin.uiMode = 'HIDDEN'
@@ -33,7 +39,7 @@ function RSAdmin.RPC(name,data,cb)
     TriggerServerEvent('rs-admin:server:rpc',name,id,data or {})
 end
 
-RegisterNetEvent('rs-admin:client:rpc',function(id,res)
+RSAdmin.RegisterServerEvent('rs-admin:client:rpc',function(id,res)
     local entry=RSAdmin.callbacks[id]
     if entry then RSAdmin.callbacks[id]=nil; entry.cb(res) end
 end)
@@ -95,7 +101,7 @@ local function bootstrap()
 end
 
 RSAdmin.Bootstrap=bootstrap
-RegisterNetEvent('rs-admin:client:open',bootstrap)
+RSAdmin.RegisterServerEvent('rs-admin:client:open',bootstrap)
 RegisterCommand(Config.Command,function() bootstrap() end,false)
 RegisterKeyMapping(Config.Command, 'Open RS Admin Menu', 'keyboard', Config.Keybind)
 
@@ -105,9 +111,11 @@ AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
     -- No automatic open. This only marks the point where /rsadmin may be used.
 end)
 RegisterNetEvent('qbx_core:client:playerLoggedOut', function()
+    RSAdmin.permissions={};RSAdmin.BeginBootstrap()
     setUiMode('HIDDEN')
 end)
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    RSAdmin.permissions={};RSAdmin.BeginBootstrap()
     setUiMode('HIDDEN')
 end)
 
@@ -198,40 +206,40 @@ RegisterNUICallback('localAction',function(data,cb)
     else execute() end
 end)
 
-RegisterNetEvent('rs-admin:client:freeze',function()
+RSAdmin.RegisterServerEvent('rs-admin:client:freeze',function()
     RSAdmin.frozen=not RSAdmin.frozen
     FreezeEntityPosition(PlayerPedId(),RSAdmin.frozen)
     notify(RSAdmin.frozen and 'You were frozen by staff.' or 'You were unfrozen by staff.')
 end)
-RegisterNetEvent('rs-admin:client:heal',function() local p=PlayerPedId(); SetEntityHealth(p,GetEntityMaxHealth(p)); SetPedArmour(p,100); notify('Healed by staff.') end)
-RegisterNetEvent('rs-admin:client:revive',function() local p=PlayerPedId(); local c=GetEntityCoords(p); NetworkResurrectLocalPlayer(c.x,c.y,c.z,GetEntityHeading(p),true,false); ClearPedBloodDamage(p); SetEntityHealth(p,GetEntityMaxHealth(p)); notify('Revived by staff.') end)
-RegisterNetEvent('rs-admin:client:kill',function() SetEntityHealth(PlayerPedId(),0) end)
-RegisterNetEvent('rs-admin:client:armor',function(d) SetPedArmour(PlayerPedId(),math.max(0,math.min(100,math.floor(tonumber(d and d.amount) or 100)))); notify('Armor restored by staff.') end)
-RegisterNetEvent('rs-admin:client:clearTasks',function() ClearPedTasksImmediately(PlayerPedId()); ClearPedSecondaryTask(PlayerPedId()); notify('Tasks cleared by staff.') end)
-RegisterNetEvent('rs-admin:client:fixVehicle',function()
+RSAdmin.RegisterServerEvent('rs-admin:client:heal',function() local p=PlayerPedId(); SetEntityHealth(p,GetEntityMaxHealth(p)); SetPedArmour(p,100); notify('Healed by staff.') end)
+RSAdmin.RegisterServerEvent('rs-admin:client:revive',function() local p=PlayerPedId(); local c=GetEntityCoords(p); NetworkResurrectLocalPlayer(c.x,c.y,c.z,GetEntityHeading(p),true,false); ClearPedBloodDamage(p); SetEntityHealth(p,GetEntityMaxHealth(p)); notify('Revived by staff.') end)
+RSAdmin.RegisterServerEvent('rs-admin:client:kill',function() SetEntityHealth(PlayerPedId(),0) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:armor',function(d) SetPedArmour(PlayerPedId(),math.max(0,math.min(100,math.floor(tonumber(d and d.amount) or 100)))); notify('Armor restored by staff.') end)
+RSAdmin.RegisterServerEvent('rs-admin:client:clearTasks',function() ClearPedTasksImmediately(PlayerPedId()); ClearPedSecondaryTask(PlayerPedId()); notify('Tasks cleared by staff.') end)
+RSAdmin.RegisterServerEvent('rs-admin:client:fixVehicle',function()
     local p=PlayerPedId(); local v=GetVehiclePedIsIn(p,false)
     if v==0 then notify('You need to be inside a vehicle.'); return end
     SetVehicleFixed(v); SetVehicleDeformationFixed(v); SetVehicleDirtLevel(v,0.0); SetVehicleEngineHealth(v,1000.0); SetVehicleBodyHealth(v,1000.0); SetVehiclePetrolTankHealth(v,1000.0); SetVehicleFuelLevel(v,100.0)
     notify('Your vehicle was repaired and refueled by staff.')
 end)
-RegisterNetEvent('rs-admin:client:bringTo',function(d) SetEntityCoords(PlayerPedId(),d.x,d.y,d.z+0.5,false,false,false,false); notify('Brought by staff.') end)
-RegisterNetEvent('rs-admin:client:teleport',function(d) SetEntityCoords(PlayerPedId(),d.x,d.y,d.z+0.5,false,false,false,false) end)
-RegisterNetEvent('rs-admin:client:message',function(d) notify(('%s: %s'):format(d.by or 'Staff',d.text or '')) end)
-RegisterNetEvent('rs-admin:client:announcement',function(d) notify(('ANNOUNCEMENT — %s'):format(d.text or '')) end)
-RegisterNetEvent('rs-admin:client:permissionsRefresh',function()
+RSAdmin.RegisterServerEvent('rs-admin:client:bringTo',function(d) SetEntityCoords(PlayerPedId(),d.x,d.y,d.z+0.5,false,false,false,false); notify('Brought by staff.') end)
+RSAdmin.RegisterServerEvent('rs-admin:client:teleport',function(d) SetEntityCoords(PlayerPedId(),d.x,d.y,d.z+0.5,false,false,false,false) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:message',function(d) notify(('%s: %s'):format(d.by or 'Staff',d.text or '')) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:announcement',function(d) notify(('ANNOUNCEMENT — %s'):format(d.text or '')) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:permissionsRefresh',function()
     RSAdmin.RPC('bootstrap',{},function(res) if res and res.ok then RSAdmin.permissions=res.data.permissions or {}; if RSAdmin.open then SendNUIMessage({type='bootstrap',data=res.data}) end end end)
 end)
-RegisterNetEvent('rs-admin:client:staffChat',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:staffChat',function(d)
     SendNUIMessage({type='staffChat',data=d})
     if not RSAdmin.open then notify(('STAFF · %s: %s'):format(d.name or 'Staff',d.message or '')) end
 end)
 
-RegisterNetEvent('rs-admin:client:reportAlert',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:reportAlert',function(d)
     if RSAdmin.Can('reports') then notify(('New report #%s from %s'):format(d.id,d.name or 'player')); SendNUIMessage({type='reportAlert',data=d}) end
 end)
-RegisterNetEvent('rs-admin:client:promptReport',function() setOpen(false); AddTextEntry('RS_ADMIN_REPORT','Describe the issue'); DisplayOnscreenKeyboard(1,'RS_ADMIN_REPORT','','','','','',500); while UpdateOnscreenKeyboard()==0 do Wait(0) end; local v=GetOnscreenKeyboardResult(); if v and #v>2 then RSAdmin.RPC('report:create',{message=v},function(r) if r.ok then notify(('Report #%s submitted.'):format(r.data.id)) else notify(r.error or 'Report failed') end end) end end)
+RSAdmin.RegisterServerEvent('rs-admin:client:promptReport',function() setOpen(false); AddTextEntry('RS_ADMIN_REPORT','Describe the issue'); DisplayOnscreenKeyboard(1,'RS_ADMIN_REPORT','','','','','',500); while UpdateOnscreenKeyboard()==0 do Wait(0) end; local v=GetOnscreenKeyboardResult(); if v and #v>2 then RSAdmin.RPC('report:create',{message=v},function(r) if r.ok then notify(('Report #%s submitted.'):format(r.data.id)) else notify(r.error or 'Report failed') end end) end end)
 
-RegisterNetEvent('rs-admin:client:weapon',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:weapon',function(d)
     local p=PlayerPedId()
     if d.action=='give' then GiveWeaponToPed(p,joaat(d.weapon),math.floor(d.ammo or 250),false,true)
     elseif d.action=='all' then for _,w in ipairs(d.weapons or {}) do GiveWeaponToPed(p,joaat(w.name),w.ammo or 250,false,false) end
@@ -241,13 +249,13 @@ RegisterNetEvent('rs-admin:client:weapon',function(d)
     end
 end)
 
-RegisterNetEvent('rs-admin:client:world',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:world',function(d)
     if d.weather then SetWeatherTypeOvertimePersist(d.weather,2.0); Wait(2000); SetWeatherTypeNowPersist(d.weather) end
     if d.hour then NetworkOverrideClockTime(d.hour,d.minute or 0,0) end
     if d.blackout~=nil then SetArtificialLightsState(d.blackout==true); SetArtificialLightsStateAffectsVehicles(false) end
 end)
 
-RegisterNetEvent('rs-admin:client:vehicleSpawned',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:vehicleSpawned',function(d)
     local untilAt=GetGameTimer()+5000
     while GetGameTimer()<untilAt do
         local v=NetworkGetEntityFromNetworkId(d.netId)
@@ -275,7 +283,7 @@ local function forceCleanup()
     FreezeEntityPosition(PlayerPedId(),false)
     SendNUIMessage({type='uiMode',mode='HIDDEN'})
 end
-RegisterNetEvent('rs-admin:client:forceCleanup',forceCleanup)
+RSAdmin.RegisterServerEvent('rs-admin:client:forceCleanup',forceCleanup)
 AddEventHandler('onResourceStop',function(res) if res==GetCurrentResourceName() then forceCleanup() end end)
 
 

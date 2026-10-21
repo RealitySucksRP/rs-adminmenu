@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'RealitySucksRP'
 description 'RS Admin Menu - cinematic server owner / developer command center'
-version '0.14.2'
+version '0.15.7'
 
 ui_page 'web/index.html'
 
@@ -24,6 +24,13 @@ client_scripts {
     'client/player_actions.lua',
     'client/punishments.lua',
     'client/world_control.lua',
+    'client/disaster_meteors.lua',
+    'client/disaster_funnel.lua',
+    'client/disaster_impacts.lua',
+    'client/disaster_stuntcars.lua',
+    'client/disaster_debris.lua',
+    'client/disaster_physical_props.lua',
+    'client/disaster_cows.lua',
     'client/spectate.lua',
     'client/noclip.lua',
     'client/vehicle_lab.lua',
@@ -37,7 +44,9 @@ server_scripts {
     'server/framework.lua',
     'server/bridge.lua',
     'server/main.lua',
+    'server/player_lifecycle.lua',
     'server/advanced.lua',
+    'server/economy_transfers.lua',
     'server/staff_groups.lua',
     'server/punishments.lua',
     'server/player_actions.lua',
@@ -49,6 +58,8 @@ server_scripts {
 files {
     'web/index.html',
     'web/style.css',
+    'web/readable.css',
+    'web/ui.css',
     'web/app.js',
     'web/assets/map.webp',
     'web/assets/*',

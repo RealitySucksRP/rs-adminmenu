@@ -965,3 +965,118 @@ html, body { background: transparent !important; background-color: transparent !
 /* The cinematic #app::before vignette also covers the world after docking. */
 #app[data-ui-mode="DOCKED"]::before,
 #app[data-ui-mode="DOCKED"]::after { display:none !important; content:none !important; }
+
+
+/* =========================================================
+   v0.14.5 corrective tablet layout pass
+   - keep the tablet frame visible and crisp
+   - enlarge typography and controls inside the glass
+   - use thicker borders and denser space usage
+   - keep overlays inside the tablet screen
+   ========================================================= */
+#app{padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;overflow:hidden!important}
+#app .tablet-device{position:relative!important;width:min(97vw,calc(96vh * 1.45954))!important;height:auto!important;max-height:96vh!important;aspect-ratio:1515 / 1038!important;zoom:1!important;margin:0 auto!important;filter:drop-shadow(0 24px 48px rgba(0,0,0,.65))!important}
+#app .tablet-frame{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;pointer-events:none!important;z-index:180!important}
+#app .tablet-screen{position:absolute!important;left:5.15%!important;top:8.35%!important;width:89.70%!important;height:82.55%!important;overflow:hidden!important;border-radius:2.45% / 3.85%!important;background:linear-gradient(180deg,rgba(5,10,15,.98),rgba(3,6,10,.96))!important;box-shadow:inset 0 0 0 2px rgba(168,199,231,.09), inset 0 24px 60px rgba(0,0,0,.20)!important;z-index:1!important;isolation:isolate!important}
+#app .tablet-screen .shell{width:100%!important;height:100%!important;margin:0!important;border:0!important;border-radius:0!important;grid-template-rows:76px 50px minmax(0,1fr) 28px!important;background:transparent!important;box-shadow:none!important}
+#app .tablet-screen .shell:before{inset:126px 0 28px!important;opacity:.34!important;filter:saturate(1.06)!important}
+#app .tablet-screen .topbar{min-height:76px!important;background:linear-gradient(180deg,rgba(7,12,18,.99),rgba(4,8,13,.97))!important;border-bottom:2px solid rgba(164,196,227,.12)!important}
+#app .tablet-screen .brand{width:244px!important;flex:0 0 244px!important;padding:11px 14px!important;gap:10px!important}
+#app .tablet-screen .brand .rs{font-size:34px!important;letter-spacing:-2px!important}
+#app .tablet-screen .brand b{font-size:18px!important;letter-spacing:.7px!important}
+#app .tablet-screen .brand small{font-size:8px!important;letter-spacing:1.3px!important}
+#app .tablet-screen .nav button{min-width:94px!important;max-width:none!important;font-size:11px!important;font-weight:900!important;letter-spacing:.48px!important;padding:0 10px!important}
+#app .tablet-screen .nav button .nav-icon{display:block!important;font-size:16px!important;margin-bottom:4px!important}
+#app .tablet-screen .top-actions{gap:6px!important;padding:9px 10px!important}
+#app .tablet-screen .icon-btn{width:38px!important;height:38px!important;min-width:38px!important;border-radius:8px!important;font-size:16px!important;border:2px solid rgba(132,169,206,.18)!important}
+#app .tablet-screen .duty-btn{min-height:38px!important;height:38px!important;padding:0 11px!important;font-size:10px!important;border-radius:8px!important}
+#app .tablet-screen .subnav{min-height:50px!important;height:50px!important;padding:6px 16px!important;gap:8px!important;background:rgba(4,8,12,.96)!important;border-bottom:2px solid rgba(164,196,227,.08)!important}
+#app .tablet-screen .section-select{min-width:230px!important;height:38px!important;min-height:38px!important;padding:0 34px 0 12px!important;font-size:12px!important;font-weight:800!important}
+#app .tablet-screen .subnav button{height:38px!important;padding:0 14px!important;font-size:11px!important;border-width:2px!important}
+#app .tablet-screen .content{padding:18px 20px 22px!important;scrollbar-gutter:stable!important}
+#app .tablet-screen .page{width:100%!important;max-width:none!important;min-height:100%!important;gap:16px!important}
+#app .tablet-screen .page>.grid:last-child,#app .tablet-screen .page>.catalog-layout:last-child,#app .tablet-screen .page>.players-layout:last-child,#app .tablet-screen .page>.widget-grid:last-child,#app .tablet-screen .page>.command-grid:last-child{flex:1 1 auto!important}
+#app .tablet-screen .hero{min-height:182px!important;padding:26px 30px!important;border:2px solid rgba(171,203,235,.12)!important;border-radius:10px!important}
+#app .tablet-screen .eyebrow{font-size:10px!important;letter-spacing:3.4px!important}
+#app .tablet-screen .hero h1{font-size:clamp(48px,4.4vw,80px)!important;line-height:.94!important}
+#app .tablet-screen .hero p{max-width:860px!important;margin-top:10px!important;font-size:12px!important;line-height:1.6!important;letter-spacing:1.05px!important}
+#app .tablet-screen .hero-guide{font-size:11px!important;padding-top:12px!important;margin-top:12px!important}
+#app .tablet-screen .hero-guide b{font-size:10px!important}
+#app .tablet-screen .hero-stats{gap:10px!important}
+#app .tablet-screen .metric{min-width:120px!important;padding:13px 14px!important;border:2px solid rgba(171,203,235,.14)!important;border-radius:10px!important}
+#app .tablet-screen .metric b{font-size:26px!important}
+#app .tablet-screen .metric small{font-size:9px!important;letter-spacing:.75px!important}
+#app .tablet-screen .grid,#app .tablet-screen .grid.two,#app .tablet-screen .grid.three,#app .tablet-screen .grid.four{gap:14px!important}
+#app .tablet-screen .panel{border:2px solid rgba(166,198,230,.14)!important;border-radius:10px!important;box-shadow:0 18px 40px rgba(0,0,0,.22)!important}
+#app .tablet-screen .panel-head{min-height:52px!important;padding:12px 16px!important;border-bottom:2px solid rgba(255,255,255,.05)!important}
+#app .tablet-screen .panel-head h2,#app .tablet-screen .panel-head h3{font-size:15px!important;letter-spacing:.9px!important}
+#app .tablet-screen .panel-body{padding:16px!important}
+#app .tablet-screen .muted,#app .tablet-screen .panel-body p.muted{font-size:11px!important;line-height:1.55!important;color:#9fb2c5!important}
+#app .tablet-screen .pill{font-size:9px!important;padding:5px 9px!important;border-width:2px!important}
+#app .tablet-screen .btn{min-height:40px!important;padding:0 14px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.55px!important;border-radius:8px!important;border-width:2px!important}
+#app .tablet-screen .input,#app .tablet-screen .select,#app .tablet-screen .textarea{min-height:40px!important;padding:0 12px!important;font-size:13px!important;border-radius:8px!important;border-width:2px!important;background:rgba(4,9,15,.90)!important}
+#app .tablet-screen .textarea{min-height:104px!important;padding:12px!important}
+#app .tablet-screen .field{font-size:11px!important;gap:7px!important;color:#b9c9d8!important}
+#app .tablet-screen .field>span:first-child{font-weight:800!important}
+#app .tablet-screen .form,.tablet-screen .btn-row,.tablet-screen .actions{gap:10px!important}
+#app .tablet-screen .range,#app .tablet-screen .range-row{grid-template-columns:170px 1fr 62px!important;gap:10px!important;margin:12px 0!important}
+#app .tablet-screen .range span,#app .tablet-screen .range-row span{font-size:11px!important}#app .tablet-screen .range output,#app .tablet-screen .range-row output{font-size:11px!important}
+#app .tablet-screen .widget-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:minmax(210px,auto)!important;gap:14px!important}
+#app .tablet-screen .widget,#app .tablet-screen .kpi,#app .tablet-screen .workspace-tile{border-width:2px!important;border-radius:10px!important}
+#app .tablet-screen .kpi b{font-size:26px!important}#app .tablet-screen .kpi small{font-size:9px!important}
+#app .tablet-screen .players-layout{grid-template-columns:minmax(260px,.92fr) minmax(480px,1.6fr) minmax(310px,1fr)!important;gap:14px!important;min-height:520px!important}
+#app .tablet-screen .player-tools{grid-template-columns:1fr 130px auto!important;gap:8px!important;margin-bottom:10px!important}
+#app .tablet-screen .player-roster-list{max-height:none!important;min-height:390px!important;gap:8px!important}
+#app .tablet-screen .player-roster-row{grid-template-columns:40px 1fr 10px!important;min-height:60px!important;padding:9px 10px!important;gap:10px!important;border-width:2px!important;border-radius:8px!important}
+#app .tablet-screen .player-roster-copy b{font-size:12px!important}.tablet-screen .player-roster-copy small{font-size:10px!important;margin-top:4px!important}
+#app .tablet-screen .status-dot{width:9px!important;height:9px!important}
+#app .tablet-screen .selected-player-identity{gap:12px!important;padding-bottom:14px!important}.tablet-screen .selected-player-identity h3{font-size:24px!important}.tablet-screen .selected-player-identity p{font-size:12px!important}
+#app .tablet-screen .avatar.large{width:64px!important;height:64px!important;font-size:18px!important}
+#app .tablet-screen .selected-stat-grid{gap:10px!important;margin:16px 0!important}.tablet-screen .selected-stat-grid>div{padding:14px!important;border-width:2px!important;border-radius:8px!important}.tablet-screen .selected-stat-grid b{font-size:19px!important}.tablet-screen .selected-stat-grid small{font-size:10px!important}
+#app .tablet-screen .player-action-grid,.tablet-screen .selected-actions .grid.two{gap:8px!important}
+#app .tablet-screen .tactical-map{height:500px!important;min-height:500px!important;border-width:2px!important;border-radius:10px!important}
+#app .tablet-screen .catalog-layout{display:grid!important;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr)!important;align-items:start!important;gap:14px!important}
+#app .tablet-screen .catalog-tools,.tablet-screen .library-toolbar{display:grid!important;grid-template-columns:minmax(200px,1fr) 170px auto auto auto!important;gap:10px!important;align-items:center!important}
+#app .tablet-screen .cards{grid-template-columns:repeat(auto-fill,minmax(196px,1fr))!important;gap:12px!important}
+#app .tablet-screen .catalog-grid,#app .tablet-screen .asset-cards.grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+#app .tablet-screen .catalog-card,#app .tablet-screen .library-card,#app .tablet-screen .card{min-height:190px!important;border-width:2px!important;border-radius:8px!important}
+#app .tablet-screen .catalog-card .card-img,#app .tablet-screen .asset-image,#app .tablet-screen .card-img{height:120px!important}
+#app .tablet-screen .card-copy,#app .tablet-screen .asset-copy{padding:10px 11px!important}.tablet-screen .card-copy b,.tablet-screen .asset-copy b{font-size:12px!important}.tablet-screen .card-copy small,.tablet-screen .asset-copy small{font-size:10px!important;line-height:1.4!important}
+#app .tablet-screen .preview{height:220px!important;border-width:2px!important;border-radius:10px!important}
+#app .tablet-screen .asset-title{font-size:28px!important;margin:14px 0 8px!important}
+#app .tablet-screen .world-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))!important;gap:10px!important}
+#app .tablet-screen .world-card{border-width:2px!important;border-radius:8px!important;overflow:hidden!important}.tablet-screen .world-card .thumb{height:92px!important}.tablet-screen .world-card button{min-height:48px!important;font-size:11px!important}.tablet-screen .world-card button small{font-size:9px!important;display:block!important;margin-top:3px!important}
+#app .tablet-screen .world-grid .world-card b{font-size:12px!important}
+#app .tablet-screen .command-grid{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:14px!important;align-items:start!important}
+#app .tablet-screen .command-grid>.panel:nth-child(1),#app .tablet-screen .command-grid>.panel:nth-child(2){grid-column:span 4!important}
+#app .tablet-screen .command-grid>.panel:nth-child(3){grid-column:span 4!important}
+#app .tablet-screen .command-grid>.panel:nth-child(n+4){grid-column:span 6!important}
+#app .tablet-screen .operator-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#app .tablet-screen .action-tile{min-height:108px!important;padding:14px!important;border-width:2px!important;border-radius:10px!important}.tablet-screen .action-tile b{font-size:13px!important}.tablet-screen .action-tile small{font-size:10px!important;line-height:1.4!important}
+#app .tablet-screen .tool-buttons{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+#app .tablet-screen .resource-row,#app .tablet-screen .log-row,#app .tablet-screen .list-row,.tablet-screen .tr{min-height:48px!important;padding:10px 12px!important;font-size:11px!important}.tablet-screen .tr.head,.tablet-screen .log-row.head{font-size:9px!important}
+#app .tablet-screen .overview-grid,.tablet-screen .dashboard-layout,.tablet-screen .workspace-grid{gap:14px!important}
+#app .tablet-screen footer{height:28px!important;padding:0 16px!important;font-size:9px!important;letter-spacing:.65px!important;border-top:2px solid rgba(164,196,227,.08)!important;background:rgba(3,6,10,.98)!important}
+#app .tablet-screen .overlay,#app .tablet-screen .quick-overlay{position:absolute!important;inset:0!important;z-index:120!important;padding:18px!important;background:rgba(2,5,9,.74)!important;backdrop-filter:blur(8px)!important}
+#app .tablet-screen .modal,#app .tablet-screen .quick-wheel-card,#app .tablet-screen .palette{width:min(960px,92%)!important;max-height:86%!important;border-width:2px!important;border-radius:12px!important}
+#app .tablet-screen .modal header{padding:14px 16px!important}.tablet-screen .modal header small{font-size:8px!important}.tablet-screen .modal h2{font-size:20px!important}.tablet-screen .modal-body{padding:16px!important;font-size:12px!important}.tablet-screen .modal-actions{padding:12px 16px!important;gap:8px!important}
+#app .tablet-screen .confirm-sheet{display:flex!important;flex-direction:column!important;gap:14px!important}.tablet-screen .confirm-lead{margin:0!important;font-size:14px!important;line-height:1.6!important;color:#eaf4ff!important}.tablet-screen .confirm-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}.tablet-screen .confirm-grid>div{padding:12px!important;border:2px solid rgba(166,198,230,.12)!important;border-radius:10px!important;background:rgba(255,255,255,.03)!important}.tablet-screen .confirm-grid small{display:block!important;font-size:9px!important;letter-spacing:1px!important;color:#92a9bf!important;text-transform:uppercase!important;margin-bottom:4px!important}.tablet-screen .confirm-grid b{font-size:14px!important;color:#fff!important}
+#app .tablet-screen .operator-dock{z-index:125!important}
+@media (max-width:1600px){#app .tablet-screen .brand{width:220px!important;flex-basis:220px!important}#app .tablet-screen .nav button{min-width:84px!important;font-size:10px!important}#app .tablet-screen .hero{min-height:162px!important;padding:22px 24px!important}#app .tablet-screen .hero h1{font-size:clamp(42px,4vw,68px)!important}#app .tablet-screen .players-layout{grid-template-columns:minmax(220px,.9fr) minmax(380px,1.4fr) minmax(280px,1fr)!important}#app .tablet-screen .cards,#app .tablet-screen .asset-cards.grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media (max-width:1200px){#app .tablet-screen .command-grid,#app .tablet-screen .widget-grid,#app .tablet-screen .grid.three,#app .tablet-screen .grid.four{grid-template-columns:repeat(2,minmax(0,1fr))!important}#app .tablet-screen .command-grid>.panel{grid-column:auto!important}#app .tablet-screen .catalog-layout,#app .tablet-screen .players-layout,#app .tablet-screen .grid.two{grid-template-columns:1fr!important}#app .tablet-screen .catalog-tools,#app .tablet-screen .library-toolbar{grid-template-columns:1fr 150px auto auto auto!important}#app .tablet-screen .hero-stats{display:none!important}}
+
+/* 0.14.6 storm director: strong hierarchy and readable control surface */
+#app .tablet-screen .disaster-rebuild .disaster-layout{align-items:stretch!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#app .tablet-screen .disaster-rebuild .disaster-intro{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px;padding:15px 16px;border:2px solid rgba(48,179,235,.25);background:linear-gradient(90deg,rgba(35,117,153,.17),transparent);border-radius:9px}
+#app .tablet-screen .disaster-rebuild .disaster-intro b{font-size:18px;letter-spacing:.3px}#app .tablet-screen .disaster-rebuild .disaster-intro small{width:100%;font-size:12px;color:#a7c4d8;line-height:1.5}
+#app .tablet-screen .disaster-rebuild .form{margin:12px 0}#app .tablet-screen .disaster-rebuild .storm-mode-hint{padding:12px;background:rgba(35,117,153,.09);border-left:3px solid #34b6e2;line-height:1.5;font-size:12px;color:#b4c9dc}
+#app .tablet-screen .disaster-rebuild .storm-toggles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+#app .tablet-screen .disaster-rebuild .storm-toggles label{display:grid;grid-template-columns:24px 1fr;gap:5px 8px;padding:12px;min-height:98px;border:2px solid rgba(139,181,213,.22);border-radius:9px;background:rgba(11,23,33,.92);cursor:pointer}
+#app .tablet-screen .disaster-rebuild .storm-toggles input{width:18px;height:18px;accent-color:#ff3f65;grid-row:span 2}
+#app .tablet-screen .disaster-rebuild .storm-toggles b{font-size:13px}#app .tablet-screen .disaster-rebuild .storm-toggles small{font-size:11px;color:#99aec2;line-height:1.35}
+#app .tablet-screen .disaster-rebuild .storm-cards{grid-template-columns:repeat(6,minmax(0,1fr))!important;margin:16px 0!important}
+#app .tablet-screen .disaster-rebuild .storm-cards .world-card .thumb{height:86px!important}#app .tablet-screen .disaster-rebuild .storm-cards .world-card button{min-height:58px!important}
+#app .tablet-screen .disaster-rebuild .storm-cards .world-card b{font-size:13px!important}
+#app .tablet-screen .disaster-rebuild .panel-body{padding:20px!important}
+@media(max-width:1600px){#app .tablet-screen .disaster-rebuild .storm-cards{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(max-width:1100px){#app .tablet-screen .disaster-rebuild .disaster-layout{grid-template-columns:1fr!important}#app .tablet-screen .disaster-rebuild .storm-toggles{grid-template-columns:1fr!important}#app .tablet-screen .disaster-rebuild .storm-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}}

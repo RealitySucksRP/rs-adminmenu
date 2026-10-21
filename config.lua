@@ -225,10 +225,12 @@ Config.World = {
     reassertMs = 2500,
 }
 Config.Disasters = {
-    maxSeconds = 120,
+    maxSeconds = 600,
     allowDamage = false,
     requireOwnerForGlobalDangerous = true,
     dangerous = { tsunami=true,meteor=true,tornado=true,firestorm=true,emp=true },
+    physics = { maxRadius=80, maxVehicles=24, maxPeds=18, vehicleTickMs=150, pedTickMs=450, playerRagdollCooldownMs=6500, surgeDelayMs=14000, cinematicCars=8, cinematicImpacts=4, debris=16, cinematicCows=2, physicalDebris=5, debrisDamage=13, verifiedTrafficImpacts=2 }, -- Bounded, owner-only global environmental forces
+    meteor = { count=28, spawnIntervalMs=1850, fallMs=3200, altitude=110, radius=88, approachDistance=155, craterSeconds=12, craterRadius=9, damageNPCs=true, damageUnownedTraffic=true, damagePlayers=false, maxCarExplosions=3, models={'xm_loading_area_rocksmore2','cs_x_rublrge','csx_seabed_bldr1_','csx_seabed_bldr8_','prop_rock_4_d'}, trails={'ent_ray_ch2_farm_fire_l_l_l','ent_amb_int_fireplace_sml','ent_ray_heli_aprtmnt_l_fire'} },
     tsunami = { floodFile='water/wavyflood.xml', highWaterFile='water/wavywater.xml', riseDelayMs=8000, highWaterDelayMs=12000 },
 }
 

@@ -15,8 +15,8 @@ local function openQuick()
 end
 RegisterCommand((Config.QuickMenu and Config.QuickMenu.command) or 'fadminmenu',openQuick,false)
 RegisterKeyMapping((Config.QuickMenu and Config.QuickMenu.command) or 'fadminmenu','Open RS Admin Quick Menu','keyboard',(Config.QuickMenu and Config.QuickMenu.keybind) or 'F10')
-RegisterNetEvent('rs-admin:client:duty',function(d) SendNUIMessage({type='dutyState',data=d}) end)
-RegisterNetEvent('rs-admin:client:staffChatChannel',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:duty',function(d) SendNUIMessage({type='dutyState',data=d}) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:staffChatChannel',function(d)
     SendNUIMessage({type='staffChatChannel',data=d})
     if not RSAdmin.open and RSAdmin.Notify then RSAdmin.Notify(('[%s] %s: %s'):format(d.channel or 'staff',d.name or 'Staff',d.message or '')) end
 end)
