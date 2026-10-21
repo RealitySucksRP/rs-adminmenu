@@ -48,7 +48,7 @@ AddEventHandler('playerDropped',function() invalidate(source) end)
 AddEventHandler('QBCore:Server:OnPlayerUnload',function(src) invalidate(tonumber(src) or source) end)
 AddEventHandler('qbx_core:server:playerLoggedOut',function(src) invalidate(tonumber(src) or source) end)
 -- Readiness is derived from server player data, never from a client citizen ID.
-AddEventHandler('QBCore:Server:OnPlayerLoaded',function() C.PollCharacter(source) end)
+RegisterNetEvent('QBCore:Server:OnPlayerLoaded',function() C.PollCharacter(source) end)
 CreateThread(function()
     while true do
         for _,id in ipairs(GetPlayers()) do C.PollCharacter(tonumber(id)) end
