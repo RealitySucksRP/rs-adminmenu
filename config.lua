@@ -254,9 +254,22 @@ Config.Punishments = {
     maxNotesPerPlayer = 300,
     maxCommunityService = 1000,
     communityServiceDefault = 20,
-    communityServiceCoords = {x=170.18,y=-990.91,z=30.09,w=162.0},
-    communityServiceOffsets = {{4.0,0.0},{-4.0,2.0},{2.0,5.0},{-2.5,-4.0},{5.5,-2.0}},
+    communityServiceCoords = {x=1735.1536,y=2549.3701,z=45.5649,w=240.3834}, -- arrival: first yard spot
+    communityServiceSpots = { -- exact world coordinates and digging headings
+        {x=1735.1536,y=2549.3701,z=45.5649,w=240.3834},
+        {x=1701.3982,y=2548.2600,z=45.5649,w=31.7955},
+        {x=1691.7727,y=2524.8066,z=45.5649,w=60.0351},
+        {x=1672.6174,y=2540.7200,z=45.5648,w=135.9926},
+        {x=1701.2090,y=2533.2058,z=45.5649,w=153.7803},
+    },
     communityServiceRadius = 2.25,
+    -- Swap the dictionary/clip, prop or scenario here for different chores later.
+    communityServiceTask = {
+        label = 'Dig', durationMs = 5000, -- each spot supplies its own heading
+        dict = 'random@burial', clip = 'a_burial', flag = 1,
+        -- scenario = 'WORLD_HUMAN_JANITOR', -- optional alternative to dict/clip
+        prop = {model='prop_tool_shovel',bone=28422,offset={0.0,0.0,0.24},rotation={0.0,0.0,0.0}},
+    },
     watchlistMaxNote = 500,
 }
 
