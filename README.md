@@ -4,7 +4,9 @@ RS Admin Menu brings player management, moderation and world control into one in
 
 Browse item, weapon, vehicle, ped and object catalogs. Work with owned vehicles, garage providers, weather, time, cleanup and world-building tools. Customize the interface with themes, wallpapers and dashboard widgets, or use RS Pathways to guide onboarding and role certification. Framework and provider integrations are handled inside the resource, with Qbox prioritized and QBCore, ESX and standalone paths where supported.
 
-[Download](https://github.com/RealitySucksRP/rs-adminmenu/releases/latest/download/rs-adminmenu.zip) · [GitHub](https://github.com/RealitySucksRP/rs-adminmenu) · [Website](https://realitysucksrp.github.io/) · [Store](https://reality-sucks-rp-webstore.tebex.io/) · [Discord](https://discord.gg/e9V3rPHySx) · [YouTube](https://www.youtube.com/@RealitySucksRP) · [Free resources](https://reality-sucks-rp-webstore.tebex.io/category/free-scripts)
+Server-wide disasters show their status and countdown, with owner controls to stop an event or restore normal weather. Character-based jail and community service recover after reconnecting, weapon removal follows the inventory provider, and unresolved transfers can be reviewed by the owner in Server → Economy.
+
+[Download](https://github.com/RealitySucksRP/rs-adminmenu/archive/refs/heads/main.zip) · [GitHub](https://github.com/RealitySucksRP/rs-adminmenu) · [Website](https://realitysucksrp.github.io/) · [Store](https://reality-sucks-rp-webstore.tebex.io/) · [Discord](https://discord.gg/e9V3rPHySx) · [YouTube](https://www.youtube.com/@RealitySucksRP) · [Free resources](https://reality-sucks-rp-webstore.tebex.io/category/free-scripts)
 
 <img src="web/assets/concepts/command-center.png" width="900" alt="RS Admin Menu design artwork">
 

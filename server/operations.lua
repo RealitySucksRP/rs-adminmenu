@@ -215,13 +215,15 @@ local function maintenanceState()
     return {active=maintenance.active,serial=maintenance.serial,started=maintenance.started,executeAt=maintenance.executeAt,by=maintenance.by,disconnectAtEnd=maintenance.disconnectAtEnd}
 end
 H('maintenance:state','server',function() return Ok(maintenanceState()) end)
-H('maintenance:cancel','owner',function(src)
-    if not maintenance.active then return Ok(false) end
+local function cancelMaintenance(src)
+    local wasActive=maintenance.active
     maintenance.serial=maintenance.serial+1; maintenance.active=false
-    TriggerClientEvent('rs-admin:client:disasterStop',-1,{})
+    if maintenance.eventId then RSAdminServer.StopDisaster('Tsunami maintenance cancelled',maintenance.eventId);maintenance.eventId=nil end
+    if not wasActive then return Ok(false) end
     TriggerClientEvent('rs-admin:client:announcement',-1,{text='Tsunami evacuation / maintenance sequence cancelled by server owner.'})
     Audit(src,'cancel tsunami maintenance','',actor(src)); return Ok(true)
-end)
+end
+H('maintenance:cancel','owner',cancelMaintenance)
 H('maintenance:tsunamiStart','owner',function(src,d)
     if not (Config.Maintenance and Config.Maintenance.tsunamiEvacuation) then return Err('Tsunami maintenance disabled') end
     if maintenance.active then return Err('A maintenance sequence is already active') end
@@ -237,16 +239,20 @@ H('maintenance:tsunamiStart','owner',function(src,d)
             local remain=maintenance.executeAt-os.time(); if remain<=0 then break end
             if remain<=(Config.Maintenance.tsunamiLeadSeconds or 30) and not tsunamiStarted then
                 tsunamiStarted=true
-                TriggerClientEvent('rs-admin:client:disaster',-1,{name='tsunami',seconds=math.max(remain,30),intensity=1.0,damage=false,by=maintenance.by})
+                local event=RSAdminServer.StartDisaster(0,{name='tsunami',scope='all',seconds=math.max(remain,5),intensity=1.0,damage=false})
+                if not event.ok then maintenance.active=false;print('[rs-adminmenu] Maintenance tsunami failed: '..tostring(event.error));return end
+                maintenance.eventId=event.data.eventId
             end
             for _,n in ipairs(checkpoints) do if remain<=n and not sent[n] then sent[n]=true; TriggerClientEvent('rs-admin:client:announcement',-1,{text=('TSUNAMI EVACUATION: server maintenance in %d second%s.'):format(math.max(1,remain),remain==1 and '' or 's')}) end end
             Wait(1000)
         end
         if not maintenance.active or maintenance.serial~=serial then return end
         maintenance.active=false
+        if maintenance.eventId then RSAdminServer.StopDisaster('Maintenance countdown completed',maintenance.eventId);maintenance.eventId=nil end
         TriggerClientEvent('rs-admin:client:announcement',-1,{text='TSUNAMI EVACUATION COMPLETE. Server maintenance window has begun.'})
         if disconnect then
             SetTimeout(1400,function()
+                if maintenance.serial~=serial then return end
                 for _,sid in ipairs(GetPlayers()) do
                     local id=tonumber(sid)
                     local keep=Config.Maintenance.keepStaffConnected and (Can(id,'open') or Can(id,'owner'))
@@ -260,6 +266,8 @@ end)
 
 -- Duty helpers for dashboard widgets ------------------------------------------
 RSAdminOperations=RSAdminOperations or {}
+RSAdminOperations.CancelMaintenance=cancelMaintenance
+RSAdminOperations.MaintenanceActive=function() return maintenance.active end
 function RSAdminOperations.DutyCount()
     local n=0; for _,d in pairs(dutyBySource) do if d.on then n=n+1 end end; return n
 end

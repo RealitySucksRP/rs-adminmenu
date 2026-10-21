@@ -1,0 +1,269 @@
+/* RealitySucksRP RS AdminMenu — audited visual layout layer.
+   Keeps the physical tablet artwork at its native aspect ratio.
+   No changes to admin actions, RPC routes or runtime disasters. */
+#app .tablet-screen .shell{
+  grid-template-rows:70px 48px minmax(0,1fr) 26px!important;
+  background:linear-gradient(135deg,#060d15,#081320 47%,#050c14)!important;
+}
+#app .tablet-screen .topbar{
+  min-height:70px!important;
+  height:70px!important;
+  position:static!important;
+  display:flex!important;
+  align-items:center!important;
+  border-bottom:2px solid rgba(105,183,222,.22)!important;
+  background:linear-gradient(90deg,#07121f,#0b1826 53%,#080f1a)!important;
+}
+#app .tablet-screen .brand{
+  width:220px!important;flex:0 0 220px!important;
+  padding:9px 16px!important;gap:10px!important;
+  background:rgba(19,34,52,.42)!important;
+  border-right:2px solid rgba(114,184,224,.18)!important;
+}
+#app .tablet-screen .brand .rs{font-size:34px!important}
+#app .tablet-screen .brand b{font-size:19px!important;letter-spacing:.55px!important}
+#app .tablet-screen .brand small{font-size:10px!important;letter-spacing:.8px!important}
+/* The navigation belongs to the left of the screen, as in the approved layout.
+   It is positioned against .shell, not restricted to the topbar's row. */
+#app .tablet-screen .nav{
+  position:absolute!important;
+  left:0!important;top:70px!important;bottom:26px!important;
+  width:156px!important;min-width:156px!important;max-width:156px!important;
+  height:auto!important;z-index:20!important;
+  display:flex!important;flex-direction:column!important;
+  flex:0 0 156px!important;
+  align-items:stretch!important;gap:5px!important;
+  padding:12px 9px 16px!important;
+  border-right:2px solid rgba(109,178,216,.24)!important;
+  background:linear-gradient(180deg,rgba(12,28,46,.97),rgba(6,13,24,.99))!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin!important;
+}
+#app .tablet-screen .nav button{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:flex!important;flex:0 0 auto!important;
+  flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  height:52px!important;min-height:52px!important;
+  padding:8px 11px!important;
+  border:2px solid transparent!important;border-radius:10px!important;
+  text-align:left!important;
+  font-size:13px!important;line-height:1.2!important;
+  letter-spacing:.2px!important;white-space:normal!important;word-break:normal!important;
+  color:#c5d4e4!important;
+}
+#app .tablet-screen .nav button .nav-icon{
+  width:24px!important;flex:0 0 24px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  height:26px!important;font-size:20px!important;line-height:1!important;
+  margin:0 9px 0 0!important;
+  color:#91d4ef!important;
+}
+#app .tablet-screen .nav button.active{
+  border-color:rgba(255,70,104,.58)!important;
+  background:linear-gradient(95deg,rgba(255,58,101,.23),rgba(255,58,101,.045))!important;
+  color:#fff!important;box-shadow:inset 4px 0 #ff3f65,0 0 16px rgba(255,55,100,.08)!important;
+}
+#app .tablet-screen .nav button.active:after{display:none!important}
+#app .tablet-screen .nav .nav-indicator{display:none!important}
+#app .tablet-screen .top-actions{
+  width:auto!important;flex:0 1 auto!important;
+  margin-left:auto!important;max-width:calc(100% - 220px)!important;
+  padding:7px 10px!important;
+  flex-direction:row!important;flex-wrap:wrap!important;
+  justify-content:flex-end!important;align-content:center!important;
+  gap:5px!important;overflow:visible!important;
+}
+#app .tablet-screen .top-actions .icon-btn{min-width:30px!important;width:30px!important;height:30px!important;min-height:30px!important;font-size:15px!important;padding:0!important}
+#app .tablet-screen .duty-btn{min-height:32px!important;height:32px!important;font-size:11px!important;padding:0 10px!important}
+#app .tablet-screen .subnav{
+  box-sizing:border-box!important;
+  margin-left:156px!important;
+  padding:5px 12px!important;
+  height:48px!important;min-height:48px!important;
+  align-items:center!important;
+  gap:8px!important;
+  background:rgba(10,24,37,.93)!important;
+  border-bottom:2px solid rgba(112,171,213,.18)!important;
+}
+#app .tablet-screen .subnav-label{display:none!important}
+#app .tablet-screen .section-select{
+  display:none!important;max-width:200px!important;min-width:145px!important;
+  height:37px!important;min-height:37px!important;
+  border:2px solid rgba(119,174,208,.3)!important;border-radius:7px!important;
+  padding:0 24px 0 9px!important;font-size:13px!important;
+}
+#app .tablet-screen .subnav:has(.subnav-tabs>button:nth-child(6)) .section-select{display:block!important}
+#app .tablet-screen .subnav-tabs{display:flex!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;flex:1 1 0!important}
+#app .tablet-screen .subnav button{
+  min-height:35px!important;height:35px!important;
+  font-size:12px!important;letter-spacing:.2px!important;
+  padding:0 11px!important;border-radius:8px!important;border-width:2px!important;
+  white-space:nowrap!important;
+}
+#app .tablet-screen .content{
+  box-sizing:border-box!important;
+  margin-left:156px!important;
+  padding:14px 15px 26px!important;
+  scrollbar-gutter:stable!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  background:linear-gradient(180deg,rgba(6,15,24,.72),rgba(5,11,19,.8))!important;
+}
+#app .tablet-screen .page{min-width:0!important;width:100%!important;max-width:none!important;gap:12px!important}
+#app .tablet-screen .page :is(.panel,.grid,.panel-body,.form,.catalog-layout,.players-layout,.command-grid,.dashboard-layout){min-width:0!important}
+#app .tablet-screen .hero{
+  min-height:120px!important;padding:18px 20px!important;
+  border:2px solid rgba(112,174,213,.32)!important;
+  border-radius:11px!important;align-items:center!important;
+  background:linear-gradient(90deg,#060f1b,#15253c)!important;
+}
+#app .tablet-screen .hero-copy{min-width:0!important;max-width:100%!important}
+#app .tablet-screen .hero h1{font-size:clamp(30px,3vw,54px)!important;line-height:1!important;overflow-wrap:normal!important}
+#app .tablet-screen .hero p{font-size:13px!important;line-height:1.48!important;letter-spacing:.2px!important;max-width:680px!important}
+#app .tablet-screen .eyebrow{font-size:11px!important;letter-spacing:2px!important}
+#app .tablet-screen .hero-guide{display:none!important}
+#app .tablet-screen .hero-stats{gap:7px!important;align-self:center!important}
+#app .tablet-screen .metric{min-width:69px!important;padding:9px 8px!important;border-width:2px!important}
+#app .tablet-screen .metric b{font-size:21px!important}
+#app .tablet-screen .metric small{font-size:11px!important;line-height:1.2!important}
+#app .tablet-screen .panel{
+  border:2px solid rgba(129,182,218,.38)!important;
+  border-radius:10px!important;
+  background:linear-gradient(160deg,rgba(15,33,51,.96),rgba(6,16,27,.97))!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18)!important;
+}
+#app .tablet-screen .panel-head{
+  min-height:44px!important;padding:9px 12px!important;
+  border-bottom:2px solid rgba(136,193,224,.2)!important;
+  background:linear-gradient(90deg,rgba(30,72,99,.22),transparent)!important;
+  flex-wrap:wrap!important;
+}
+#app .tablet-screen .panel-head h2,#app .tablet-screen .panel-head h3{
+  font-size:16px!important;line-height:1.25!important;letter-spacing:.25px!important;
+}
+#app .tablet-screen .panel-body{padding:13px!important}
+#app .tablet-screen :is(.field,.muted,.panel-body p.muted,.list-row,.log-row,.resource-row,.coords,.widget-body,.power-row,.player-roster-copy small,.asset-copy small,.map-note){
+  font-size:13px!important;line-height:1.46!important;
+}
+#app .tablet-screen :is(.btn,.world-card button,.workspace-tile b,.action-tile b){font-size:14px!important;line-height:1.25!important;font-weight:800!important}
+#app .tablet-screen .btn{min-height:39px!important;padding:7px 11px!important;border-width:2px!important;border-radius:7px!important;white-space:normal!important;overflow-wrap:break-word!important}
+#app .tablet-screen :is(.input,.select,.textarea){min-height:42px!important;font-size:14px!important;padding:8px 10px!important;border-width:2px!important;border-radius:8px!important}
+#app .tablet-screen .field{gap:6px!important;font-weight:760!important}
+#app .tablet-screen :is(.pill,.asset-meta,.log-row.head,.tr.head,.range output,.range-row output){font-size:12px!important;line-height:1.3!important}
+#app .tablet-screen .pill{border-width:2px!important;white-space:nowrap!important}
+#app .tablet-screen .grid,#app .tablet-screen .grid.two,#app .tablet-screen .grid.three,#app .tablet-screen .grid.four{gap:11px!important}
+#app .tablet-screen .widget-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:auto!important;gap:11px!important}
+#app .tablet-screen .widget{min-height:145px!important;border-width:2px!important;border-color:rgba(129,182,218,.32)!important;border-radius:9px!important}
+#app .tablet-screen .widget-head{font-size:14px!important;min-height:38px!important;padding:10px 12px!important}
+#app .tablet-screen .widget-body{font-size:13px!important;padding:12px!important}
+#app .tablet-screen .workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#app .tablet-screen .workspace-tile{min-height:78px!important;padding:12px!important;border-width:2px!important;border-radius:9px!important}
+#app .tablet-screen .workspace-tile .ui-icon{width:27px!important;height:27px!important;flex-shrink:0!important}
+#app .tablet-screen .workspace-tile small{font-size:12px!important;line-height:1.4!important}
+#app .tablet-screen .dashboard-layout{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}
+#app .tablet-screen .dashboard-layout>div:last-child{grid-column:1/-1!important}
+#app .tablet-screen .command-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important;align-items:start!important}
+#app .tablet-screen .command-grid>.panel{grid-column:auto!important}
+#app .tablet-screen .operator-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+#app .tablet-screen .action-tile{min-height:96px!important;padding:10px!important;border-width:2px!important;border-radius:9px!important}
+#app .tablet-screen .action-tile small{font-size:12px!important;line-height:1.35!important}
+#app .tablet-screen .power-row{font-size:13px!important;min-height:42px!important;gap:8px!important}
+#app .tablet-screen .power-row i{font-size:12px!important}
+#app .tablet-screen .players-layout{grid-template-columns:minmax(185px,.9fr) minmax(265px,1.2fr)!important;gap:11px!important;min-height:0!important}
+#app .tablet-screen .players-layout>.selected-player{grid-column:1/-1!important}
+#app .tablet-screen .players-layout>.selected-player .panel-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)!important;gap:12px!important}
+#app .tablet-screen .players-layout>.selected-player .selected-player-banner{grid-column:1!important}
+#app .tablet-screen .players-layout>.selected-player .selected-actions{grid-column:2!important;grid-row:1/span 3!important}
+#app .tablet-screen .player-tools{grid-template-columns:minmax(0,1fr)!important;gap:7px!important}
+#app .tablet-screen .player-roster-list{max-height:375px!important;min-height:220px!important}
+#app .tablet-screen .player-roster-row{min-height:56px!important;padding:8px!important;border-width:2px!important;border-radius:8px!important}
+#app .tablet-screen .player-roster-copy b{font-size:14px!important}
+#app .tablet-screen .selected-player-identity h3{font-size:20px!important}
+#app .tablet-screen .selected-actions .btn{min-height:38px!important}
+#app .tablet-screen .tactical-map{height:340px!important;min-height:340px!important}
+#app .tablet-screen .catalog-layout{grid-template-columns:minmax(0,1.55fr) minmax(255px,1fr)!important;gap:11px!important}
+#app .tablet-screen .catalog-tools,#app .tablet-screen .library-toolbar{grid-template-columns:minmax(0,1fr) 120px auto!important;gap:7px!important}
+#app .tablet-screen .asset-cards.grid,#app .tablet-screen .catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#app .tablet-screen .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#app .tablet-screen .library-card{min-height:168px!important;border-width:2px!important;border-radius:9px!important}
+#app .tablet-screen .asset-image,#app .tablet-screen .card-img{height:114px!important}
+#app .tablet-screen .asset-copy b,#app .tablet-screen .card-copy b{font-size:14px!important}
+#app .tablet-screen .asset-copy small,#app .tablet-screen .card-copy small{font-size:12px!important}
+#app .tablet-screen .preview{height:200px!important}
+#app .tablet-screen .world-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}
+#app .tablet-screen .world-card .thumb{height:90px!important}
+#app .tablet-screen .world-card button{min-height:48px!important;font-size:13px!important}
+#app .tablet-screen .world-card b{font-size:13px!important}
+#app .tablet-screen .storm-toggles{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#app .tablet-screen .storm-cards,#app .tablet-screen .disaster-rebuild .storm-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+#app .tablet-screen .disaster-rebuild .storm-cards .world-card .thumb{height:80px!important}
+#app .tablet-screen .disaster-rebuild .storm-toggles{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#app .tablet-screen .disaster-rebuild .storm-toggles label{min-height:87px!important;padding:12px!important}
+#app .tablet-screen .disaster-rebuild .storm-toggles b{font-size:14px!important}
+#app .tablet-screen .disaster-rebuild .storm-toggles small{font-size:12px!important}
+#app .tablet-screen .disaster-rebuild .panel-body{padding:14px!important}
+#app .tablet-screen .range{grid-template-columns:135px minmax(0,1fr) 42px!important;gap:7px!important}
+#app .tablet-screen .range span,#app .tablet-screen .range output{font-size:12px!important}
+#app .tablet-screen :is(.tr,.log-row,.resource-row){overflow-wrap:anywhere!important}
+#app .tablet-screen :is(.table,.log-list,.resource-list,.panel){max-width:100%!important}
+#app .tablet-screen :is(.modal,.palette,.quick-wheel-card){max-width:calc(100% - 36px)!important;max-height:calc(100% - 36px)!important;border-width:2px!important}
+#app .tablet-screen .modal-body{font-size:14px!important}
+#app .tablet-screen .modal h2{font-size:21px!important}
+#app .tablet-screen .overlay,#app .tablet-screen .quick-overlay{overflow:auto!important}
+#app .tablet-screen .toasts{max-width:calc(100% - 25px)!important;overflow-wrap:anywhere!important}
+#app .tablet-screen footer{height:26px!important;margin-left:156px!important;font-size:11px!important;letter-spacing:.35px!important}
+/* Tablets at 1366 x 768 have a narrower glass working area. Use readable stacks. */
+@media (max-width:1600px){
+ #app .tablet-screen .brand{width:185px!important;flex-basis:185px!important;padding:7px 12px!important}
+ #app .tablet-screen .brand b{font-size:17px!important}#app .tablet-screen .brand small{font-size:9px!important}
+ #app .tablet-screen .nav{width:140px!important;min-width:140px!important;max-width:140px!important}
+ #app .tablet-screen .nav button{font-size:12px!important;padding:7px!important;min-height:47px!important;height:47px!important}
+ #app .tablet-screen .nav button .nav-icon{width:22px!important;flex-basis:22px!important;font-size:18px!important;margin-right:6px!important}
+ #app .tablet-screen .subnav,#app .tablet-screen .content,#app .tablet-screen footer{margin-left:140px!important}
+ #app .tablet-screen .top-actions{max-width:calc(100% - 185px)!important;gap:3px!important;padding:4px!important}
+ #app .tablet-screen .top-actions .icon-btn{width:26px!important;min-width:26px!important;height:27px!important;min-height:27px!important}
+ #app .tablet-screen .duty-btn{font-size:10px!important;padding:0 6px!important}
+ #app .tablet-screen .page>.hero{min-height:108px!important;padding:14px!important}
+ #app .tablet-screen .hero h1{font-size:36px!important}
+ #app .tablet-screen .hero-stats{display:none!important}
+ #app .tablet-screen .players-layout,#app .tablet-screen .catalog-layout,#app .tablet-screen .disaster-layout{grid-template-columns:1fr!important}
+ #app .tablet-screen .players-layout>.selected-player{grid-column:auto!important}
+ #app .tablet-screen .disaster-layout>.span2{grid-column:1/-1!important}
+ #app .tablet-screen .command-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #app .tablet-screen .world-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #app .tablet-screen .storm-cards,#app .tablet-screen .disaster-rebuild .storm-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #app .tablet-screen .grid.three,#app .tablet-screen .grid.four{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+/* Long labels may wrap; important confirmation fields stay reachable. */
+@media (max-width:1100px){
+ #app .tablet-screen .nav{width:116px!important;min-width:116px!important;max-width:116px!important;padding:8px 5px!important}
+ #app .tablet-screen .nav button{font-size:11px!important}
+ #app .tablet-screen .subnav,#app .tablet-screen .content,#app .tablet-screen footer{margin-left:116px!important}
+ #app .tablet-screen .command-grid,#app .tablet-screen .dashboard-layout,#app .tablet-screen .grid.two{grid-template-columns:1fr!important}
+ #app .tablet-screen .dashboard-layout>div:last-child{grid-column:auto!important}
+ #app .tablet-screen .world-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+/* Equal specificity to the old nth-child grid spans: each operator panel owns one column. */
+#app .tablet-screen .command-grid>.panel:nth-child(n){grid-column:auto!important}
+/* Keep the complete navigation discoverable on typical 1080p displays. */
+#app .tablet-screen .nav{gap:3px!important;padding-top:9px!important;padding-bottom:10px!important}
+#app .tablet-screen .nav button{height:44px!important;min-height:44px!important;padding-top:6px!important;padding-bottom:6px!important}
+#app .tablet-screen .brand{border-right:2px solid rgba(114,184,224,.18)!important}
+@media (max-width:1600px){#app .tablet-screen .nav button{height:41px!important;min-height:41px!important}}
+@media (min-width:2300px){
+ #app .tablet-screen .nav button{font-size:15px!important;height:47px!important;min-height:47px!important}
+ #app .tablet-screen .panel-head h2,#app .tablet-screen .panel-head h3{font-size:18px!important}
+ #app .tablet-screen :is(.field,.muted,.panel-body p.muted,.list-row,.log-row,.resource-row,.widget-body,.power-row){font-size:15px!important}
+ #app .tablet-screen :is(.btn,.workspace-tile b,.action-tile b){font-size:16px!important}
+ #app .tablet-screen .input,#app .tablet-screen .select{font-size:16px!important}
+}
+@media (min-width:2300px){
+ #app .tablet-screen .nav{width:182px!important;min-width:182px!important;max-width:182px!important}
+ #app .tablet-screen .subnav,#app .tablet-screen .content,#app .tablet-screen footer{margin-left:182px!important}
+}
+/* Weapon library: the grant chip must never extend beyond the glass on 1366x768. */
+#app .tablet-screen .weapon-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#app .tablet-screen .weapon-card{min-width:0!important;padding:12px!important;gap:9px!important;flex-wrap:wrap!important;border-width:2px!important;border-radius:9px!important}
+#app .tablet-screen .weapon-card>span{min-width:0!important;overflow-wrap:anywhere!important}
+#app .tablet-screen .weapon-card em{font-size:12px!important;margin-left:auto!important;white-space:normal!important}

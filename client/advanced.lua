@@ -10,12 +10,18 @@ local function teleport(c)
     local ped=PlayerPedId(); SetEntityCoordsNoOffset(ped,x,y,z,false,false,false); if w then SetEntityHeading(ped,w) end
 end
 
-RegisterNetEvent('rs-admin:client:jail',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:jail',function(d)
+    if type(d)~='table' or not d.coords then return end
     jail=d; teleport(d.coords); ClearPedTasksImmediately(PlayerPedId()); RSAdmin.Notify(('Jailed: %s'):format(d.reason or 'Administrative sentence'))
 end)
-RegisterNetEvent('rs-admin:client:unjail',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:unjail',function(d)
+    if type(d)~='table' then return end
     jail=nil; teleport(d.coords); ClearPedTasksImmediately(PlayerPedId()); RSAdmin.Notify(('Released: %s'):format(d.reason or 'Sentence ended'))
 end)
+local function clearCharacterJail() jail=nil end
+AddEventHandler('QBCore:Client:OnPlayerUnload',clearCharacterJail)
+AddEventHandler('qbx_core:client:playerLoggedOut',clearCharacterJail)
+RSAdmin.RegisterServerEvent('rs-admin:client:clearPunishments',clearCharacterJail)
 CreateThread(function()
     while true do
         if not jail or not jail.coords then Wait(1500) else
@@ -31,21 +37,21 @@ local function requestAnim(dict)
     while not HasAnimDictLoaded(dict) and GetGameTimer()<untilAt do Wait(0) end
     return HasAnimDictLoaded(dict)
 end
-RegisterNetEvent('rs-admin:client:prankAnimation',function(a)
+RSAdmin.RegisterServerEvent('rs-admin:client:prankAnimation',function(a)
     if not a or not a.dict or not a.clip then return end; local ped=PlayerPedId(); if not requestAnim(a.dict) then return end
     TaskPlayAnim(ped,a.dict,a.clip,8.0,-8.0,math.max(1000,tonumber(a.duration) or 5000),tonumber(a.flag) or 49,0.0,false,false,false)
 end)
 local function clearPrankEntities()
     for _,e in ipairs(prankEntities) do if DoesEntityExist(e) then DeleteEntity(e) end end; prankEntities={}; StopEntityFire(PlayerPedId()); StopGameplayCamShaking(true)
 end
-RegisterNetEvent('rs-admin:client:prankStop',function() ClearPedTasksImmediately(PlayerPedId()); clearPrankEntities(); if RSAdmin.Pranks and RSAdmin.Pranks.Reset then RSAdmin.Pranks.Reset() end end)
-RegisterNetEvent('rs-admin:client:prankAdvanced',function(d)
+RSAdmin.RegisterServerEvent('rs-admin:client:prankStop',function() ClearPedTasksImmediately(PlayerPedId()); clearPrankEntities(); if RSAdmin.Pranks and RSAdmin.Pranks.Reset then RSAdmin.Pranks.Reset() end end)
+RSAdmin.RegisterServerEvent('rs-admin:client:prankAdvanced',function(d)
     local action=tostring(d.action or ''); local seconds=math.max(1,math.min(Config.PrankMaxSeconds or 30,tonumber(d.seconds) or 8)); local ped=PlayerPedId()
     if action=='fire' then StartEntityFire(ped); SetTimeout(seconds*1000,function() StopEntityFire(ped) end)
     elseif action=='launch' then SetPedToRagdoll(ped,1200,1200,0,false,false,false); ApplyForceToEntity(ped,1,0.0,0.0,22.0,0,0,0,0,false,true,true,false,true)
     elseif action=='vehicleBlast' then local v=GetVehiclePedIsIn(ped,false); local e=v~=0 and v or ped; local c=GetEntityCoords(e); AddExplosion(c.x,c.y,c.z,2,1.0,true,false,0.8,true)
     elseif action=='ragdoll' then CreateThread(function() local stop=GetGameTimer()+seconds*1000; while GetGameTimer()<stop do SetPedToRagdoll(ped,850,850,0,false,false,false); Wait(450) end end)
-    elseif action=='drunk' or action=='spin' or action=='screenShake' or action=='vehicleSpin' then TriggerEvent('rs-admin:client:prank',{action=action,seconds=seconds})
+    elseif action=='drunk' or action=='spin' or action=='screenShake' or action=='vehicleSpin' then RSAdmin.ApplyPrank({action=action,seconds=seconds})
     elseif action=='droneStrike' then
         CreateThread(function()
             local hash=joaat('ch_prop_casino_drone_02a'); RequestModel(hash); local untilAt=GetGameTimer()+3500; while not HasModelLoaded(hash) and GetGameTimer()<untilAt do Wait(0) end
@@ -80,9 +86,9 @@ local function addBuilder(r)
     SetModelAsNoLongerNeeded(hash); if not ent or ent==0 then return end; builder[tonumber(r.id)]=ent; SetEntityHeading(ent,tonumber(r.w) or 0); FreezeEntityPosition(ent,r.frozen~=false); SetEntityCollision(ent,r.collision~=false,r.collision~=false); SetEntityAlpha(ent,tonumber(r.alpha) or 255,false); if kind=='prop' then pcall(SetObjectTintIndex,ent,tonumber(r.tint) or 0) end; if kind~='prop' then SetEntityInvincible(ent,true); SetBlockingOfNonTemporaryEvents(ent,true) end; applyScale(ent,r.scale)
     if (kind=='ped' or kind=='anim') and r.animDict and r.animDict~='' and r.animClip and r.animClip~='' and requestAnim(r.animDict) then TaskPlayAnim(ent,r.animDict,r.animClip,8.0,-8.0,-1,tonumber(r.animFlag) or 49,0,false,false,false) end
 end
-RegisterNetEvent('rs-admin:client:builderAdd',addBuilder)
-RegisterNetEvent('rs-admin:client:builderDelete',function(d) removeBuilder(d and d.id) end)
-RegisterNetEvent('rs-admin:client:builderSync',function(rows) for id in pairs(builder) do removeBuilder(id) end; for id in pairs(builderBlips) do removeBuilder(id) end; for _,r in ipairs(rows or {}) do addBuilder(r) end end)
+RSAdmin.RegisterServerEvent('rs-admin:client:builderAdd',addBuilder)
+RSAdmin.RegisterServerEvent('rs-admin:client:builderDelete',function(d) removeBuilder(d and d.id) end)
+RSAdmin.RegisterServerEvent('rs-admin:client:builderSync',function(rows) for id in pairs(builder) do removeBuilder(id) end; for id in pairs(builderBlips) do removeBuilder(id) end; for _,r in ipairs(rows or {}) do addBuilder(r) end end)
 
 AddEventHandler('onResourceStop',function(res)
     if res~=GetCurrentResourceName() then return end; jail=nil; clearPrankEntities(); for id in pairs(builder) do removeBuilder(id) end; for id in pairs(builderBlips) do removeBuilder(id) end
