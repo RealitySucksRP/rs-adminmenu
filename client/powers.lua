@@ -14,7 +14,16 @@ RSAdmin.LocalActions.operatorCoords=function()
     local p=PlayerPedId(); local c=GetEntityCoords(p); local h=GetEntityHeading(p)
     return {ok=true,data={x=c.x,y=c.y,z=c.z,heading=h,text=('vector4(%.2f, %.2f, %.2f, %.2f)'):format(c.x,c.y,c.z,h)}}
 end
+-- Track actual weapons touched by this power, including addon/catalog weapons
+-- and weapons used before the player changed ped models.
+local infiniteAmmoWeapons = {}
 local function resetWeaponAmmoFlags(ped)
+    for affectedPed,weapons in pairs(infiniteAmmoWeapons) do
+        if affectedPed==ped or DoesEntityExist(affectedPed) then
+            for hash in pairs(weapons) do SetPedInfiniteAmmo(affectedPed,false,hash) end
+        end
+    end
+    infiniteAmmoWeapons = {}
     for _,w in ipairs(Config.Weapons or {}) do local h=joaat(w.name); if HasPedGotWeapon(ped,h,false) then SetPedInfiniteAmmo(ped,false,h) end end
 end
 
@@ -127,7 +136,15 @@ CreateThread(function()
         if P.state.fastrun then SetRunSprintMultiplierForPlayer(pid,1.49); SetPedMoveRateOverride(ped,1.49); active=true end
         if P.state.fastswim then SetSwimMultiplierForPlayer(pid,1.49); active=true end
         if P.state.stamina then RestorePlayerStamina(pid,1.0); active=true end
-        if P.state.infiniteammo then local w=GetSelectedPedWeapon(ped); if w and w~=joaat('WEAPON_UNARMED') then SetPedInfiniteAmmo(ped,true,w) end; active=true end
+        if P.state.infiniteammo then
+            local w=GetSelectedPedWeapon(ped)
+            if w and w~=joaat('WEAPON_UNARMED') then
+                infiniteAmmoWeapons[ped]=infiniteAmmoWeapons[ped] or {}
+                infiniteAmmoWeapons[ped][w]=true
+                SetPedInfiniteAmmo(ped,true,w)
+            end
+            active=true
+        end
         if P.state.noreload then SetPedInfiniteAmmoClip(ped,true); active=true end
         if P.state.explosiveammo then SetExplosiveAmmoThisFrame(pid); active=true end
         if P.state.fireammo then SetFireAmmoThisFrame(pid); active=true end

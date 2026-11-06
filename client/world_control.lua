@@ -74,13 +74,27 @@ local function apply(s)
     local ownsWeather=controlled(s,'weather');local ownsTime=controlled(s,'hour') or controlled(s,'minute')
     if ownsWeather and not claimed.weather then previousWeather=GetNextWeatherTypeHashName() end
     if controlled(s,'wind') and not claimed.wind then previousWind=GetWindSpeed() end
-    if ownsWeather and s.weather then SetWeatherTypePersist(s.weather);SetWeatherTypeNowPersist(s.weather);SetOverrideWeather(s.weather)
+    if ownsWeather and s.weather then
+        -- Replace the old forced weather before applying the next preset.
+        -- Persisting a type alone does not reset the active weather transition.
+        ClearOverrideWeather()
+        ClearWeatherTypePersist()
+        SetWeatherTypePersist(s.weather)
+        SetWeatherTypeNow(s.weather)
+        SetWeatherTypeNowPersist(s.weather)
+        SetOverrideWeather(s.weather)
     elseif claimed.weather then ClearOverrideWeather();ClearWeatherTypePersist();restoreWeather(previousWeather) end
     if ownsTime then NetworkOverrideClockTime(math.floor(clamp(s.hour,0,23)),math.floor(clamp(s.minute or 0,0,59)),math.floor(clamp(s.second or 0,0,59)))
     elseif claimed.time then NetworkClearClockTimeOverride() end
     if controlled(s,'blackout') then SetArtificialLightsState(s.blackout==true);SetArtificialLightsStateAffectsVehicles(false)
     elseif claimed.blackout then SetArtificialLightsState(false) end
-    if controlled(s,'rain') then SetRainLevel(clamp(s.rain,-1,1)) elseif claimed.rain then SetRainLevel(-1) end
+    if controlled(s,'rain') then
+        local rain=clamp(s.rain,-1,1)
+        -- Automatic Extra Sunny must not retain rain from the previous storm.
+        -- Explicit manual rainfall still takes precedence.
+        if rain<0 and ownsWeather and s.weather=='EXTRASUNNY' then rain=0.0 end
+        SetRainLevel(rain)
+    elseif claimed.rain then SetRainLevel(-1) end
     if controlled(s,'wind') then SetWindSpeed(clamp(s.wind,0,12)) elseif claimed.wind then SetWindSpeed(previousWind or 0) end
     if controlled(s,'windDirection') then SetWindDirection(math.rad((tonumber(s.windDirection) or 0)%360))
     elseif claimed.windDirection then SetWindDirection(-1.0) end

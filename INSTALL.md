@@ -14,6 +14,6 @@ ensure rs-adminmenu
 
 Open `/rsadmin`. The quick menu is `/fadminmenu`; duty is `/aduty`.
 
-**Updating an installed server:** back up the resource and keep your live `data/`, `config.lua` and `server_config.lua`. The full download contains clean first-install data templates.
+**Updating an installed server:** back up the resource and keep your live `data/`, `config.lua` and `server_config.lua`. The resource creates its runtime data as needed; the download does not contain live server records.
 
 For optional Pathways guide items and provider milestones, use the examples in `install/pathway_items.lua` and `install/pathway_hooks.lua`.

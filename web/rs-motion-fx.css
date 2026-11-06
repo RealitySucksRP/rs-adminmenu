@@ -1,0 +1,139 @@
+/* RS AdminMenu — additive NUI visual FX.
+   No layout dimensions, data flow, permission paths, keybinds or original artwork changed.
+   Scoped to visible tablet, supports motion settings and OS reduced-motion preference.
+   The base styles intentionally disable workspace entrance loops to prevent flashing. */
+
+#app .tablet-screen {
+  --rsfx-speed: var(--motion-speed, 1);
+  --rsfx-blue: var(--accent2, #20a9ff);
+  --rsfx-red: var(--accent, #ff3f65);
+}
+
+/* Interactive tiles: real pointer-responsive perspective, with a restrained highlight.
+   Avoid transforms on panels, content shells, maps and overlays. */
+#app .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank) {
+  --rsfx-rx:0deg;
+  --rsfx-ry:0deg;
+  --rsfx-mx:50%;
+  --rsfx-my:50%;
+  position:relative;
+  transform-origin:50% 50%;
+  backface-visibility:hidden;
+  transition:transform calc(210ms * var(--motion-speed, 1)) cubic-bezier(.2,.85,.22,1),
+    border-color calc(190ms * var(--motion-speed, 1)) ease,
+    box-shadow calc(220ms * var(--motion-speed, 1)) ease,
+    filter calc(200ms * var(--motion-speed, 1)) ease !important;
+}
+#app .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):is(:hover,:focus-within) {
+  transform:perspective(1100px) translateY(-3px) rotateX(var(--rsfx-rx)) rotateY(var(--rsfx-ry)) !important;
+  box-shadow:0 15px 24px rgba(0,0,0,.35), 0 0 15px rgba(32,169,255,.11), inset 0 1px rgba(230,244,255,.12) !important;
+  filter:brightness(1.075);
+}
+/* A light that follows the pointer, without introducing a new DOM hit target. */
+#app .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank)::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(260px circle at var(--rsfx-mx) var(--rsfx-my),rgba(143,222,255,.19),rgba(65,152,198,.055) 31%,transparent 67%);
+  opacity:0;
+  transition:opacity 240ms ease;
+  pointer-events:none;
+  z-index:2;
+}
+#app .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):is(:hover,:focus-within)::after { opacity:1; }
+
+/* Buttons/rail: feedback is visual only; position, size and hit areas remain unchanged. */
+#app .tablet-screen :is(.nav button,.subnav button,.btn,.icon-btn,.duty-btn,.dock-actions button,.quick-actions button) {
+  transition:transform calc(170ms * var(--motion-speed,1)) cubic-bezier(.2,.85,.2,1),
+     box-shadow calc(180ms * var(--motion-speed,1)) ease,
+     border-color calc(180ms * var(--motion-speed,1)) ease,
+     color calc(180ms * var(--motion-speed,1)) ease,
+     background-color calc(180ms * var(--motion-speed,1)) ease !important;
+  will-change:auto;
+}
+#app .tablet-screen .nav button:not(:disabled):hover { transform:translateX(3px) translateZ(0) !important;box-shadow:0 2px 12px rgba(29,161,223,.16), inset 2px 0 rgba(94,212,255,.38) !important; }
+#app .tablet-screen .nav button .nav-icon { transition:transform 210ms ease,filter 210ms ease !important; }
+#app .tablet-screen .nav button:hover .nav-icon { transform:translateY(-1px) scale(1.12);filter:drop-shadow(0 0 6px var(--rsfx-blue)); }
+#app .tablet-screen :is(.subnav button,.btn,.icon-btn,.duty-btn,.dock-actions button,.quick-actions button):not(:disabled):hover {
+  transform:translateY(-2px) !important;
+  box-shadow:0 5px 16px rgba(0,0,0,.23), 0 0 14px rgba(32,169,255,.11) !important;
+}
+#app .tablet-screen :is(.subnav button,.btn,.icon-btn,.duty-btn,.dock-actions button,.quick-actions button):not(:disabled):active,
+#app .tablet-screen .nav button:not(:disabled):active {transform:translateY(0) scale(.975) !important;transition-duration:75ms !important;}
+
+/* Small telemetry accents, not constantly animating data or re-rendered DOM. */
+#app .tablet-screen :is(.kpi,.metric,.selected-stat-grid>div) {
+  transition:transform 220ms ease,box-shadow 220ms ease,border-color 220ms ease !important;
+}
+#app .tablet-screen :is(.kpi,.metric,.selected-stat-grid>div):hover {
+  transform:translateY(-2px) !important;
+  box-shadow:0 7px 18px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.085) !important;
+  border-color:rgba(122,209,249,.40) !important;
+}
+#app .tablet-screen :is(.panel,.widget):hover {
+  border-color:rgba(119,191,232,.32) !important;
+  box-shadow:0 13px 35px rgba(0,0,0,.34),0 0 15px rgba(32,169,255,.045) !important;
+  transition:box-shadow 260ms ease,border-color 260ms ease !important;
+}
+#app .tablet-screen :is(.player-roster-row,.list-row,.tr:not(.head),.resource-row,.log-row:not(.head)) {
+  transition:background-color 170ms ease,box-shadow 170ms ease,border-color 170ms ease !important;
+}
+#app .tablet-screen :is(.player-roster-row,.list-row,.tr:not(.head),.resource-row,.log-row:not(.head)):hover {
+  background-color:rgba(61,150,205,.075) !important;
+  box-shadow:inset 2px 0 rgba(78,205,255,.40) !important;
+}
+#app .tablet-screen :is(.input,.select,.textarea):focus-visible {
+  border-color:rgba(90,205,251,.77) !important;
+  box-shadow:0 0 0 2px rgba(41,151,202,.14),0 0 14px rgba(32,169,255,.095) !important;
+  outline:none !important;
+}
+#app .tablet-screen button:focus-visible {outline:2px solid rgba(120,217,255,.75) !important;outline-offset:1px !important;}
+
+/* Bounded animations only when an intentional overlay is opened. */
+@keyframes rsfxSheetEnter {from{opacity:.2;transform:translateY(16px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rsfxToastIn {from{opacity:.05;transform:translateY(-11px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+#app .tablet-screen .overlay:not(.hidden) :is(.modal,.palette),
+#app .tablet-screen .quick-overlay:not(.hidden) .quick-wheel-card {
+  animation:rsfxSheetEnter calc(260ms * var(--motion-speed,1)) cubic-bezier(.18,1,.33,1) both !important;
+}
+/* Preserve the existing location/transform for toast to avoid snapping it. */
+#app .tablet-screen .toasts .toast {animation:rsIsland calc(420ms * var(--motion-speed,1)) cubic-bezier(.16,1.35,.3,1) both !important;}
+
+/* Honor users who prefer minimal motion, and any explicit disabled-motion theme. */
+@media (prefers-reduced-motion:reduce) {
+ #app .tablet-screen *,#app .tablet-screen *::before,#app .tablet-screen *::after {transition:none!important;animation:none!important;scroll-behavior:auto!important;}
+ #app .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):is(:hover,:focus-within),
+ #app .tablet-screen :is(.btn,.icon-btn,.nav button,.subnav button):hover {transform:none!important;}
+}
+#app[data-motion="off"] .tablet-screen *,#app[data-motion="off"] .tablet-screen *::before,#app[data-motion="off"] .tablet-screen *::after,
+#app[data-motion="none"] .tablet-screen *,#app[data-motion="none"] .tablet-screen *::before,#app[data-motion="none"] .tablet-screen *::after {
+ transition:none!important;animation:none!important;
+}
+#app[data-motion="off"] .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):hover,
+#app[data-motion="none"] .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):hover {transform:none!important;}
+
+/* Images get a short parallax-style lift inside their existing cropped viewport. */
+#app .tablet-screen .content :is(.card-img,.asset-image,.preview) img,
+#app .tablet-screen .content .world-card .thumb {
+  transition:transform calc(280ms * var(--motion-speed,1)) cubic-bezier(.2,.85,.2,1),
+             filter calc(260ms * var(--motion-speed,1)) ease !important;
+}
+#app .tablet-screen .content :is(.card,.library-card):hover :is(.card-img,.asset-image) img,
+#app .tablet-screen .content .preview:hover img,
+#app .tablet-screen .content .world-card:hover .thumb {
+  transform:scale(1.055) translateZ(0) !important;
+  filter:saturate(1.12) contrast(1.05);
+}
+#app .tablet-screen .panel::before {transform-origin:left center;transition:transform 270ms ease,filter 270ms ease!important;}
+#app .tablet-screen .panel:hover::before {transform:scaleX(1.45);filter:brightness(1.2);}
+/* Keep the existing perspective/depth off setting meaningful. */
+#app[data-depth="off"] .tablet-screen :is(.panel,.widget):hover,
+#app[data-depth="off"] .tablet-screen .content :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank):hover {
+ box-shadow:none!important;
+}
+@media (prefers-reduced-motion:reduce) {
+ #app .tablet-screen .content :is(.card,.library-card):hover :is(.card-img,.asset-image) img,
+ #app .tablet-screen .content .preview:hover img,
+ #app .tablet-screen .content .world-card:hover .thumb {transform:none!important;}
+}

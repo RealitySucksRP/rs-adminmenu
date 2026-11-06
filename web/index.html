@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>RS Adminmenu</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="readable.css">
-  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="style.css?v=0.15.13">
+  <link rel="stylesheet" href="readable.css?v=0.15.13">
+  <link rel="stylesheet" href="ui.css?v=0.15.13">
+  <link rel="stylesheet" href="rs-motion-fx.css?v=0.15.13">
+  <link rel="stylesheet" href="rs-operations-polish.css?v=0.15.13">
 </head>
 <body style="background:transparent!important">
 <div id="app" class="hidden" aria-hidden="true" data-page="dashboard" data-text="medium" data-font="modern" data-motion="smooth" data-depth="medium">
@@ -33,6 +35,12 @@
   <aside id="operatorDock" class="operator-dock hidden">
     <div class="dock-head"><span><b>RS OWNER</b><small>HOLD ALT TO CLICK · /RSADMIN TO REOPEN</small></span><button id="dockExpand" class="dock-expand" title="Expand">↗</button></div>
     <div class="dock-stats"><span><b id="dockPlayers">0</b> PLAYERS</span><span><b id="dockReports">0</b> REPORTS</span><span><b id="dockStaff">0</b> STAFF</span></div>
+    <div id="builderPreviewDock" class="builder-preview-dock hidden">
+      <b id="builderPreviewModel">PLACEMENT PREVIEW</b>
+      <p>ARROWS move · PAGE UP/DOWN height · Q/E rotate · SHIFT faster</p>
+      <p>ENTER use position · ESC cancel · Hold ALT to click</p>
+      <div class="btn-row"><button class="btn accent" data-builder="finishPreview">USE POSITION</button><button class="btn warn" data-builder="cancelPreview">CANCEL</button></div>
+    </div>
     <div class="dock-actions"><button data-dock-action="heal">HEAL</button><button data-dock-action="noclip">NOCLIP</button><button data-dock-action="gotoWaypoint">WAYPOINT</button><button data-dock-action="reports">REPORTS</button><button data-dock-action="players">PLAYERS</button><button data-dock-action="vehicleRepair">REPAIR</button></div>
   </aside>
   <div id="toasts" class="toasts"></div>
@@ -50,6 +58,8 @@
     <img class="tablet-frame" src="assets/tablet-frame.png" alt="" draggable="false">
   </div>
 </div>
-<script src="app.js"></script>
+<script src="app.js?v=0.15.13"></script>
+<script src="rs-motion-fx.js?v=0.15.13"></script>
+<script src="rs-operations-polish.js?v=0.15.13"></script>
 </body>
 </html>

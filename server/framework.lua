@@ -5,6 +5,35 @@ RSAdminServer.Adapter = A
 local itemCache
 local weaponCache
 local qbcache
+local oxImageCache = {}
+
+local function oxItemImage(name, definition)
+    local base=GetConvar('inventory:imagepath','nui://ox_inventory/web/images'):gsub('/+$','')
+    local configured=type(definition)=='table' and definition.client and definition.client.image
+    if configured then
+        configured=tostring(configured)
+        return configured:match('^[%w]+://') and configured or (base..'/'..configured)
+    end
+    -- Ox strips client.image from its server export. Resolve installed artwork
+    -- here instead of having NUI probe missing PNGs for WebP-only items.
+    local key=base..'/'..tostring(name)
+    if oxImageCache[key] then return oxImageCache[key] end
+    local image
+    if base~='nui://ox_inventory/web/images' and base~='https://cfx-nui-ox_inventory/web/images' then
+        image=key..'.png'
+    else
+        for _,extension in ipairs({'png','webp'}) do
+            local filename=tostring(name)..'.'..extension
+            if LoadResourceFile('ox_inventory','web/images/'..filename) then
+                image=base..'/'..filename
+                break
+            end
+        end
+    end
+    image=image or 'assets/concepts/assets-library.png'
+    oxImageCache[key]=image
+    return image
+end
 
 local function qb()
     if qbcache then return qbcache end
@@ -37,6 +66,7 @@ end
 
 function A.ItemList(refresh)
     if itemCache and not refresh then return itemCache end
+    if refresh then oxImageCache={} end
     local list, seen = {}, {}
     local function add(name, label, image, weight)
         name = tostring(name or '')
@@ -49,8 +79,7 @@ function A.ItemList(refresh)
         local ok, items = pcall(function() return exports.ox_inventory:Items() end)
         if ok and type(items) == 'table' then
             for name, d in pairs(items) do
-                local image=('nui://ox_inventory/web/images/%s.png'):format(name)
-                if type(d)=='table' and d.client and d.client.image then image=tostring(d.client.image) end
+                local image=oxItemImage(name,d)
                 add(name, type(d)=='table' and (d.label or d.name) or name, image, type(d)=='table' and d.weight or 0)
             end
         end
@@ -331,7 +360,7 @@ function A.GetInventory(src)
         local ok,items=pcall(function() return exports.ox_inventory:GetInventoryItems(src) end)
         if ok and type(items)=='table' then
             local out={}
-            for _,item in pairs(items) do if type(item)=='table' and item.name and (tonumber(item.count) or 0)>0 then out[#out+1]={slot=item.slot,name=item.name,label=item.label or item.name,count=item.count,weight=item.weight or 0,metadata=item.metadata or {},image=('nui://ox_inventory/web/images/%s.png'):format(item.name)} end end
+            for _,item in pairs(items) do if type(item)=='table' and item.name and (tonumber(item.count) or 0)>0 then out[#out+1]={slot=item.slot,name=item.name,label=item.label or item.name,count=item.count,weight=item.weight or 0,metadata=item.metadata or {},image=oxItemImage(item.name,item)} end end
             table.sort(out,function(a,b) return (a.slot or 999)<(b.slot or 999) end); return out
         end
     end

@@ -1,0 +1,323 @@
+/* RS AdminMenu — scoped corrective UI pass (Vehicles / Operations Map / Player Profile).
+   Changes are additive; player and vehicle server actions are not altered. */
+
+/* Admin Cars: keep entire vehicles visible, and give name/actions their own row. */
+#app .tablet-screen .rs-admin-fleet{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card{
+  display:flex!important;flex-direction:column!important;min-height:244px!important;
+  border-radius:12px!important;overflow:hidden!important;background:linear-gradient(160deg,#142337,#091421)!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card .card-img{
+  height:183px!important;min-height:183px!important;overflow:hidden!important;
+  background:radial-gradient(ellipse at 50% 90%,rgba(56,128,180,.24),transparent 64%),linear-gradient(130deg,#1d2b3c,#0d1520)!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;padding:10px 18px!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card .card-img img{
+  width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:50% 50%!important;transform:none!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card:hover .card-img img{transform:scale(1.025)!important;}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card .card-copy{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:12px!important;padding:10px 12px!important;min-height:49px!important;
+  background:rgba(4,11,19,.92)!important;position:relative!important;z-index:1!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card .card-copy b{
+  display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  max-width:65%!important;font-size:13px!important;letter-spacing:.2px!important;
+}
+#app .tablet-screen .rs-admin-fleet .rs-fleet-card .card-copy .btn{min-width:122px!important;min-height:34px!important;font-size:10px!important;}
+
+/* Players page: map is the primary working surface. No tiny 313x470 atlas. */
+#app .tablet-screen .players-page .players-layout{
+  display:grid!important;grid-template-columns:minmax(210px,.78fr) minmax(450px,2fr) minmax(255px,.87fr)!important;
+  align-items:start!important;gap:12px!important;
+}
+#app .tablet-screen .players-page .players-layout>.panel{min-width:0!important;}
+#app .tablet-screen .players-page .players-map .panel-body{padding:10px!important;}
+#app .tablet-screen .players-page .map-viewport.rs-tactical-view{
+  width:100%!important;min-width:0!important;position:relative!important;
+  display:flex!important;flex-direction:column!important;gap:8px!important;
+}
+#app .tablet-screen .rs-tactical-view .rs-map-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:36px;padding:4px 6px 4px 10px;border:1px solid #65bfe255;
+  border-radius:8px;background:linear-gradient(90deg,#102b3ed9,#061421ed);z-index:4;
+}
+#app .tablet-screen .rs-tactical-view .rs-map-coordinate{color:#aad8eb;font-size:9px;font-weight:900;letter-spacing:1.2px;}
+#app .tablet-screen .rs-tactical-view .rs-map-tools{display:flex;align-items:center;gap:5px;}
+#app .tablet-screen .rs-tactical-view .rs-map-tools button{
+  min-width:33px;height:28px;border:1px solid #73a7c475;border-radius:5px;background:#18364a;color:#ebf9ff;
+  font-weight:900;font-size:14px;cursor:pointer;
+}
+#app .tablet-screen .rs-tactical-view .rs-map-tools button:last-child{font-size:9px;}
+#app .tablet-screen .rs-tactical-view .rs-map-tools button:hover{border-color:#62d9ff;background:#28516c;}
+#app .tablet-screen .players-page .rs-tactical-view .map-stage{
+  height:590px!important;min-height:590px!important;width:100%!important;
+  position:relative!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  border:1px solid #3f718955;border-radius:12px;
+  background:radial-gradient(ellipse at 50% 50%,rgba(30,110,149,.22),transparent 68%),#07111b!important;
+  cursor:grab;touch-action:none;
+}
+#app .tablet-screen .players-page .rs-tactical-view .map-stage.rs-dragging{cursor:grabbing;}
+/* Geographic plane image and all markers transform together to preserve spatial alignment. */
+#app .tablet-screen .players-page .rs-tactical-view .map-geographic{
+  width:392px!important;min-width:392px!important;height:588px!important;min-height:588px!important;
+  max-width:none!important;flex:0 0 392px!important;
+  position:relative!important;overflow:visible!important;border:0!important;border-radius:0!important;
+  background-image:linear-gradient(180deg,rgba(1,7,15,.03),rgba(0,5,14,.14)),var(--atlas,url('assets/map.webp'))!important;
+  background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;
+  transform:translate(var(--rs-map-pan-x,0px),var(--rs-map-pan-y,0px)) scale(var(--rs-map-zoom,1.48))!important;
+  transform-origin:50% 50%!important;
+  transition:transform 140ms cubic-bezier(.19,.87,.28,1)!important;
+  box-shadow:0 25px 42px rgba(0,0,0,.45);backface-visibility:hidden;
+}
+
+#app .tablet-screen .players-page .rs-tactical-view .map-stage.rs-dragging .map-geographic{transition:none!important;}
+#app .tablet-screen .players-page .rs-tactical-view .map-grid-label{font-size:10px!important;color:#fff!important;text-shadow:0 2px 6px #000;}
+#app .tablet-screen .players-page .rs-tactical-view .marker-label,
+#app .tablet-screen .players-page .rs-tactical-view .vehicle-marker-label{
+  max-width:125px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:3px 6px!important;font-size:8px!important;border:1px solid #5cb9e67d;
+}
+#app .tablet-screen .players-page .rs-tactical-view .map-caption{font-size:10px;line-height:1.45;color:#97bed2;}
+#app .tablet-screen .players-page .players-map>.panel-head{gap:8px!important;}
+#app .tablet-screen .players-page .players-map>.panel-head .btn-row{gap:5px;}
+#app .tablet-screen .players-page .selected-player .panel-body{padding:12px!important;}
+#app .tablet-screen .players-page .selected-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+#app .tablet-screen .players-page .selected-player .btn-row{gap:5px!important;}
+#app .tablet-screen .players-page .selected-player .btn{min-height:34px!important;min-width:0;font-size:10px!important;}
+#app .tablet-screen .players-page .profile-facts{margin:9px 0!important;}
+#app .tablet-screen .players-page .player-roster-list{min-height:390px!important;max-height:620px!important;overflow-y:auto!important;}
+
+/* Player profile: one modal, four clearly separated tabs, no overlapping KPI text/actions. */
+#app .tablet-screen .modal.rs-profile-dialog{
+  width:min(1190px,96%)!important;max-height:92%!important;height:min(730px,92%)!important;
+  min-width:0!important;overflow:hidden!important;display:grid!important;
+  grid-template-rows:auto minmax(0,1fr) auto!important;
+}
+#app .tablet-screen .modal.rs-profile-dialog header{flex-shrink:0;min-height:62px;}
+#app .tablet-screen .modal.rs-profile-dialog .modal-body{
+  min-height:0!important;overflow-y:auto!important;padding:16px 20px 22px!important;
+}
+#app .tablet-screen .modal.rs-profile-dialog .rs-profile-v3{width:100%;display:block;min-width:0;}
+#app .tablet-screen .rs-profile-intro{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:14px;padding:13px 15px;border:1px solid #5c8fac66;border-radius:9px;
+  background:linear-gradient(95deg,#1d4059,#0c1a29);
+}
+#app .tablet-screen .rs-profile-intro strong{display:block;font-size:21px;line-height:1.25;color:#fff;overflow-wrap:anywhere;}
+#app .tablet-screen .rs-profile-intro span{display:block;margin-top:4px;font-size:11px;color:#b2cfe1;}
+#app .tablet-screen .rs-profile-presence{margin:0!important;padding:8px 10px;color:#71ffd4!important;border:1px solid #54c8a0;background:#12342d;border-radius:8px;white-space:nowrap;font-weight:900;letter-spacing:.6px;}
+#app .tablet-screen .rs-profile-presence.dead{color:#ffa0a5!important;background:#3a1722;border-color:#e3677b;}
+#app .tablet-screen .rs-profile-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:5px;background:#071421;border:1px solid #3f6f8b80;border-radius:10px;margin-bottom:15px;}
+#app .tablet-screen .rs-profile-tab{min-width:0;border:0;border-radius:7px;background:transparent;padding:12px 5px;color:#a4c5d8;font-size:11px;letter-spacing:.5px;font-weight:900;cursor:pointer;}
+#app .tablet-screen .rs-profile-tab.active,#app .tablet-screen .rs-profile-tab:hover{color:#fff;background:#24516c;box-shadow:inset 0 -2px #59e4ff;}
+#app .tablet-screen .rs-profile-pane[hidden]{display:none!important;}
+#app .tablet-screen .rs-profile-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 16px;}
+#app .tablet-screen .rs-profile-stat{min-width:0;min-height:78px;background:linear-gradient(150deg,#1a3143,#0b1725);border:1px solid #5c839d77;border-bottom:2px solid #4ac0ef;border-radius:8px;padding:11px 13px;display:flex;flex-direction:column;justify-content:space-between;gap:5px;}
+#app .tablet-screen .rs-profile-stat strong{font-size:clamp(14px,1.45vw,22px)!important;line-height:1.1;letter-spacing:-.4px;color:#74dffc;overflow-wrap:anywhere;white-space:normal;word-break:break-word;font-variant-numeric:tabular-nums;}
+#app .tablet-screen .rs-profile-stat.green strong{color:#7ef4b5;}.rs-profile-stat.gold strong{color:#ffe193;}.rs-profile-stat.red strong{color:#ff9bac;}
+#app .tablet-screen .rs-profile-stat small{font-size:9px;letter-spacing:.65px;text-transform:uppercase;color:#a3bac9;}
+#app .tablet-screen .rs-profile-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+#app .tablet-screen .rs-profile-fact{display:grid;grid-template-columns:115px minmax(0,1fr);gap:6px;align-items:center;min-height:42px;padding:9px 11px;border:1px solid #4d6e8766;border-radius:6px;background:#0b1b2b;color:#91b2c7;font-size:10px;}
+#app .tablet-screen .rs-profile-fact b{text-align:right;color:#fff;font-size:11px;overflow-wrap:anywhere;word-break:break-word;}
+#app .tablet-screen .rs-profile-action-group{margin:0 0 17px;padding:15px;border-radius:10px;background:#0a1a29;border:1px solid #456b8466;}
+#app .tablet-screen .rs-profile-action-group h3{margin:0 0 12px;font-size:14px!important;letter-spacing:.9px;color:#b1e7ff;}
+#app .tablet-screen .rs-profile-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+#app .tablet-screen .rs-profile-action-grid .btn{min-width:0;min-height:42px!important;font-size:11px!important;white-space:normal;padding:8px 9px!important;}
+#app .tablet-screen .rs-profile-identifiers{font-family:Consolas,monospace;line-height:1.8;overflow-wrap:anywhere;color:#bbcede;font-size:11px;}
+#app .tablet-screen .rs-profile-history{display:grid;gap:5px;}
+#app .tablet-screen .rs-profile-history>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border:1px solid #44687e66;border-radius:5px;font-size:10px;}
+#app .tablet-screen .rs-profile-history span{color:#a2c5d8;white-space:nowrap;}
+@media(max-width:1650px){
+ #app .tablet-screen .players-page .players-layout{grid-template-columns:minmax(185px,.75fr) minmax(385px,1.9fr) minmax(235px,.88fr)!important;}
+ #app .tablet-screen .players-page .rs-tactical-view .map-stage{height:530px!important;min-height:530px!important;}
+ #app .tablet-screen .players-page .rs-tactical-view .map-geographic{width:353px!important;min-width:353px!important;flex-basis:353px!important;height:530px!important;min-height:530px!important;}
+ #app .tablet-screen .rs-profile-action-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media(max-width:1180px){
+ #app .tablet-screen .players-page .players-layout{grid-template-columns:1fr 1fr!important;}
+ #app .tablet-screen .players-page .players-map{grid-column:1/-1;grid-row:1;}
+ #app .tablet-screen .rs-admin-fleet{grid-template-columns:1fr!important;}
+ #app .tablet-screen .rs-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+ #app .tablet-screen .rs-profile-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}
+ #app .tablet-screen .rs-profile-facts{grid-template-columns:1fr;}
+}
+@media(prefers-reduced-motion:reduce){#app .tablet-screen .rs-tactical-view .map-geographic{transition:none!important;}}
+/* Expanded operations atlas. The main map remains live underneath. */
+#app .tablet-screen .rs-tactical-view .map-geographic{will-change:auto!important;backface-visibility:visible!important;}
+#app .tablet-screen .rs-tactical-view .rs-map-atlas{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:fill;pointer-events:none;user-select:none;}
+#app .tablet-screen .rs-tactical-view .rs-map-tools button[data-rsmap="expand"]{font-size:9px!important;min-width:76px!important;}
+#app .tablet-screen .modal.rs-map-dialog{width:min(1250px,97%)!important;height:94%!important;max-height:94%!important;overflow:hidden!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;}
+#app .tablet-screen .modal.rs-map-dialog .modal-body{overflow:hidden!important;padding:12px!important;min-height:0!important;}
+#app .tablet-screen .rs-map-expanded-host{height:100%;min-height:0!important;}
+#app .tablet-screen .rs-map-expanded-host .rs-tactical-view{height:100%;width:100%;min-height:0;display:flex;flex-direction:column;gap:7px;}
+#app .tablet-screen .rs-map-expanded-host .rs-tactical-view .map-stage{
+  flex:1 1 auto!important;min-height:0!important;height:auto!important;position:relative;
+  display:flex;justify-content:center;align-items:center;overflow:hidden;border-radius:9px;
+  background:radial-gradient(ellipse at center,#174160aa,#07111a 70%)!important;
+}
+#app .tablet-screen .rs-map-expanded-host .map-geographic{
+  width:430px!important;min-width:430px!important;height:645px!important;min-height:645px!important;max-width:none!important;
+  flex:0 0 430px!important;position:relative!important;
+  background-image:linear-gradient(#081a2424,#081a2424),var(--atlas,url('assets/map.webp'))!important;
+  background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;
+  transform:translate(var(--rs-map-pan-x,0px),var(--rs-map-pan-y,0px)) scale(var(--rs-map-zoom,1.48))!important;
+  transform-origin:center center!important;box-shadow:0 20px 60px #0008!important;
+  transition:transform 130ms ease!important;
+}
+
+#app .tablet-screen .rs-map-expanded-host .map-caption{font-size:10px;line-height:1.35;color:#aed6ec;}
+
+/* State what applies immediately and what waits for an Apply button. */
+.weather-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.weather-guide>div,.weather-clock-mode,.weather-notice{padding:14px;border:1px solid #527d9866;border-radius:8px;background:#0b2030;}
+.weather-guide b,.weather-clock-mode>b{color:var(--accent2);font-size:12px;letter-spacing:.6px;}
+.weather-guide p{font-size:13px;line-height:1.65;margin:7px 0 0;color:#c0d0df;}
+.weather-clock-mode{margin-bottom:14px;}
+.weather-clock-mode>span{display:block;margin-top:6px;font-size:12px;color:#b2c7da;line-height:1.5;}
+.weather-shortcuts{margin-top:12px;gap:10px;}
+#app .tablet-screen .weather-option{display:block;padding:0!important;text-align:left;color:var(--text);cursor:pointer;min-width:0;}
+#app .tablet-screen .weather-option .thumb{display:block;}
+.weather-option-label{display:block;padding:12px;}
+.weather-option-label>b{display:block;font-size:13px;}
+.weather-option-label>small{display:block;margin-top:6px;font-size:9px;color:#acc4d8;letter-spacing:.5px;}
+#app .tablet-screen .weather-option.selected{border-color:var(--accent2);box-shadow:inset 0 0 0 1px var(--accent2);}
+@media(max-width:1100px){.weather-guide{grid-template-columns:1fr;}}
+
+/* A docked world preview must expose the game, including outside the old glass. */
+#app[data-ui-mode="DOCKED"] .tablet-frame{display:none!important;}
+#app[data-ui-mode="DOCKED"] .tablet-device,
+#app[data-ui-mode="DOCKED"] .tablet-screen{
+  background:transparent!important;box-shadow:none!important;filter:none!important;border:0!important;
+}
+.builder-preview-dock{padding:12px;}
+.builder-preview-dock>b{display:block;overflow-wrap:anywhere;color:var(--accent2);font-size:12px;}
+.builder-preview-dock p{font-size:10px;line-height:1.6;color:#b4cadd;}
+#app .operator-dock.is-placing :is(.dock-stats,.dock-actions){display:none!important;}
+.builder-workflow{display:flex;flex-wrap:wrap;gap:12px;color:var(--accent2);font-size:11px;font-weight:800;margin-bottom:12px;}
+.builder-workspace .panel-body>.btn-row{margin:12px 0;}
+#app .tablet-screen .native-library{display:grid!important;grid-template-columns:minmax(0,1fr) 280px!important;gap:14px!important;align-items:start;}
+#app .tablet-screen .native-library .asset-cards{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;}
+#app .tablet-screen .native-library .library-card{min-width:0!important;overflow:hidden;}
+#app .tablet-screen .native-model-card{min-height:0!important;padding:10px!important;gap:8px!important;}
+#app .tablet-screen .native-photo{
+  width:100%;aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;position:relative;min-height:0;
+  background:radial-gradient(ellipse at center,#244057,#07121c 78%);border-radius:7px;
+}
+#app .tablet-screen .native-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+#app .tablet-screen .native-photo-empty{align-content:center;gap:10px;text-align:center;}
+#app .tablet-screen .native-selected .native-photo{max-height:280px;}
+.blip-picker-layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start;}
+.blip-icon-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
+.blip-choice{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:12px 6px;border:1px solid #57718b77;border-radius:7px;background:#081520;color:#eaf5ff;cursor:pointer;}
+.blip-choice.selected{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.blip-choice img{width:38px;height:38px;object-fit:contain;}
+.blip-choice b{font-size:10px;overflow-wrap:anywhere;text-transform:capitalize;}
+.blip-choice small{font-size:10px;color:#9eb7cc;}
+.blip-selection{display:flex;flex-direction:column;gap:12px;position:sticky;top:0;min-width:0;}
+.blip-selection>img{width:64px;height:64px;object-fit:contain;padding:10px;box-sizing:content-box;background:#112638;border-radius:10px;}
+@media(max-width:1600px){
+  #app .tablet-screen .native-library{grid-template-columns:minmax(0,1fr) 220px!important;}
+  #app .tablet-screen .native-library .asset-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .blip-picker-layout{grid-template-columns:minmax(0,1fr) 190px;}
+  .blip-icon-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+}
+@media(max-width:1100px){
+  #app .tablet-screen .native-library,.blip-picker-layout{grid-template-columns:minmax(0,1fr)!important;}
+  .blip-icon-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+
+/* Artwork cards: square frames keep heads visible instead of narrow banner crops. */
+#app .tablet-screen :is(.world-card,.prank,.theme-card,.wall) .thumb,
+#app .tablet-screen .disaster-rebuild .storm-cards .world-card .thumb,
+#app .tablet-screen .palette-card .palette-scene{
+  width:100%!important;height:auto!important;min-height:0!important;
+  aspect-ratio:1/1!important;flex-shrink:0;
+  background-size:cover!important;background-position:var(--art-focus,50% 50%)!important;
+  background-repeat:no-repeat!important;
+}
+#app .tablet-screen .section-art{
+  width:min(100%,190px)!important;height:auto!important;min-height:0!important;
+  aspect-ratio:1/1!important;margin:0!important;box-sizing:border-box;
+  background-size:cover!important;background-position:var(--art-focus,50% 50%)!important;
+  background-repeat:no-repeat!important;position:relative;isolation:isolate;
+  border:1px solid rgba(114,184,224,.3);border-radius:8px!important;padding:10px!important;
+}
+#app .tablet-screen .section-art:before{
+  content:'';position:absolute;inset:55% 0 0;z-index:-1;
+  background:linear-gradient(transparent,rgba(3,8,15,.95));pointer-events:none;
+}
+#app .tablet-screen .section-art span{
+  font-size:10px!important;line-height:1.4;letter-spacing:1px!important;
+  overflow-wrap:anywhere;
+}
+#app .tablet-screen .panel-body:has(>.section-art){
+  display:grid!important;grid-template-columns:minmax(100px,190px) minmax(0,1fr)!important;
+  grid-template-rows:repeat(3,auto);gap:0 14px!important;align-items:start;
+}
+#app .tablet-screen .panel-body>.section-art{grid-column:1;grid-row:1/span 3;}
+#app .tablet-screen .panel-body:has(>.section-art)>:not(.section-art){grid-column:2;min-width:0;}
+#app .tablet-screen .panel-body:has(>.section-art)>.overview-grid{margin-top:0!important;}
+#app .tablet-screen .selected-player-banner{
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;min-width:0;
+}
+#app .tablet-screen .selected-player-banner>.section-art{
+  width:140px!important;flex:0 0 140px;
+  background-size:180% auto!important;background-position:50% 28%!important;
+}
+#app .tablet-screen .selected-player-identity{min-width:0;}
+/* Landscape characters sit off-center; portrait scenes need the lower subject. */
+#app .tablet-screen [style*="rs-wallpaper-13"]{--art-focus:32% 50%;}
+#app .tablet-screen [style*="rs-wallpaper-05"]{--art-focus:67% 50%;}
+#app .tablet-screen [style*="rs-wallpaper-06"]{--art-focus:50% 35%;}
+#app .tablet-screen [style*="rs-wallpaper-11"]{--art-focus:50% 78%;}
+#app .tablet-screen [style*="rs-wallpaper-08"]{--art-focus:34% 50%;}
+#app .tablet-screen [style*="rs-wallpaper-09"]{--art-focus:63% 50%;}
+#app .tablet-screen .hero:before{background-position:center 25%!important;}
+#app[data-page="players"] .tablet-screen .hero:before{background-position:center 23%!important;}
+@media(max-width:1600px){
+  #app .tablet-screen .panel-body:has(>.section-art){grid-template-columns:120px minmax(0,1fr)!important;gap:0 10px!important;}
+  #app .tablet-screen .selected-player-banner>.section-art{width:100px!important;flex-basis:100px;}
+  #app .tablet-screen .players-page .players-layout{grid-template-columns:minmax(145px,.8fr) minmax(0,1.2fr)!important;}
+  #app .tablet-screen .players-page .players-layout>.selected-player{grid-column:1/-1!important;}
+}
+
+/* Size the geographic plane at the requested zoom; never upscale a cached small layer. */
+#app .tablet-screen :is(.players-page,.rs-map-expanded-host) .rs-tactical-view .map-geographic{
+ --rs-map-base-width:392px;--rs-map-base-height:588px;
+ width:calc(var(--rs-map-base-width) * var(--rs-map-zoom,1.48))!important;
+ min-width:calc(var(--rs-map-base-width) * var(--rs-map-zoom,1.48))!important;
+ height:calc(var(--rs-map-base-height) * var(--rs-map-zoom,1.48))!important;
+ min-height:calc(var(--rs-map-base-height) * var(--rs-map-zoom,1.48))!important;
+ flex:0 0 auto!important;background:#173d64!important;
+ transform:translate(var(--rs-map-pan-x,0px),var(--rs-map-pan-y,0px))!important;
+ transition:none!important;filter:none!important;will-change:auto!important;
+}
+
+#app .tablet-screen :is(.players-page,.rs-map-expanded-host) .rs-tactical-view .map-geographic:after{display:none!important;}
+#app .tablet-screen :is(.players-page,.rs-map-expanded-host) .rs-tactical-view .rs-map-atlas{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;user-select:none;}
+#app .tablet-screen :is(.players-page,.rs-map-expanded-host) .rs-tactical-view .rs-map-atlas img{position:absolute;width:calc(100% / 6 + .2px);height:calc(100% / 9 + .2px);max-width:none;display:block;pointer-events:none;user-select:none;}
+@media(max-width:1650px){#app .tablet-screen .players-page .rs-tactical-view .map-geographic{--rs-map-base-width:353px;--rs-map-base-height:530px;}}
+#app .tablet-screen .rs-map-expanded-host .rs-tactical-view .map-geographic{--rs-map-base-width:430px;--rs-map-base-height:645px;}
+
+/* The operations map is flat-only and never participates in theme depth effects. */
+#app .tablet-screen .players-page,#app .tablet-screen .players-map,
+#app .tablet-screen .rs-map-expanded-host,#app .tablet-screen .rs-tactical-view{
+ animation:none!important;perspective:none!important;filter:none!important;transform:none!important;transition:none!important;
+}
+#app .tablet-screen .rs-tactical-view .map-stage{perspective:none!important;animation:none!important;}
+#app .tablet-screen .rs-tactical-view .vehicle-marker{
+ width:14px!important;height:10px!important;min-width:0!important;min-height:0!important;padding:0!important;
+ border:1px solid #fff!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;animation:none!important;
+}
+#app .tablet-screen .rs-tactical-view .vehicle-cluster{
+ position:absolute;z-index:5;width:28px!important;height:28px!important;min-width:0!important;min-height:0!important;
+ padding:0!important;border:2px solid #ffe3a4!important;border-radius:50%!important;background:#835313!important;color:#fff!important;
+ font-size:11px!important;font-weight:900;line-height:24px!important;text-align:center;box-shadow:none!important;
+ transform:translate(-50%,-50%)!important;animation:none!important;cursor:pointer;
+}
+#app .tablet-screen .rs-tactical-view .vehicle-marker-label{display:none!important;}

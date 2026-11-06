@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'RealitySucksRP'
 description 'RS Admin Menu - cinematic server owner / developer command center'
-version '0.15.7'
+version '0.15.13'
 
 ui_page 'web/index.html'
 
@@ -61,6 +61,10 @@ files {
     'web/readable.css',
     'web/ui.css',
     'web/app.js',
+    'web/rs-motion-fx.css',
+    'web/rs-motion-fx.js',
+    'web/rs-operations-polish.css',
+    'web/rs-operations-polish.js',
     'web/assets/map.webp',
     'web/assets/*',
     'web/assets/**/*',
