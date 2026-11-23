@@ -4,13 +4,13 @@
   'use strict';
   const app = document.getElementById('app');
   if (!app) return;
-  const matches = '.tablet-screen .content .workspace-tile, .tablet-screen .content .action-tile, .tablet-screen .content .card, .tablet-screen .content .library-card, .tablet-screen .content .world-card, .tablet-screen .content .theme-card, .tablet-screen .content .prank';
+  const matches = '.tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(.workspace-tile,.action-tile,.card,.library-card,.world-card,.theme-card,.prank,.weapon-card,.weather-option,.blip-choice,.wall,.palette-card,.native-model-card,.rs-fleet-card)';
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
   let active = null;
   let rect = null;
   let next = null;
   let raf = 0;
-  const enabled = () => !app.classList.contains('hidden') && !['off','none'].includes(app.dataset.motion) && !(reduce && reduce.matches);
+  const enabled = () => !app.classList.contains('hidden') && app.dataset.uiMode === 'FULL' && app.dataset.depth !== 'off' && !['off','none','reduced'].includes(app.dataset.motion) && !(reduce && reduce.matches);
   const reset = () => {
     if (active && active.isConnected) {
       active.style.removeProperty('--rsfx-rx');
@@ -43,8 +43,8 @@
       raf = 0;
       if (!active || !active.isConnected || !next || !enabled()) {reset();return;}
       const {x,y} = next;
-      active.style.setProperty('--rsfx-rx',`${((.5-y)*5).toFixed(2)}deg`);
-      active.style.setProperty('--rsfx-ry',`${((x-.5)*6).toFixed(2)}deg`);
+      active.style.setProperty('--rsfx-rx',`${((.5-y)*(app.dataset.depth==='high'?8:5)).toFixed(2)}deg`);
+      active.style.setProperty('--rsfx-ry',`${((x-.5)*(app.dataset.depth==='high'?10:6)).toFixed(2)}deg`);
       active.style.setProperty('--rsfx-mx',`${Math.round(x*100)}%`);
       active.style.setProperty('--rsfx-my',`${Math.round(y*100)}%`);
     });
@@ -55,4 +55,5 @@
     reset();
   }, {passive:true});
   window.addEventListener('blur',reset);
+  new MutationObserver(() => { if (!enabled()) reset(); }).observe(app, {attributes:true,attributeFilter:['class','data-ui-mode','data-motion','data-depth']});
 })();

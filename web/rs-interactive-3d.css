@@ -1,0 +1,110 @@
+/* RS AdminMenu 0.15.13 — visual-only interaction system.
+   No new fullscreen surface. No change to map, input, RPC, selection, or placement logic.
+   All visual elements are confined to the existing tablet-screen. */
+html,body,#app{background:transparent!important;color-scheme:normal!important}
+#app::before{display:none!important} /* prior full-window vignette must not dim GTA */
+#app .rsui-fx-canvas{
+  position:absolute;inset:0;width:100%;height:100%;z-index:124;
+  pointer-events:none!important;touch-action:auto;display:block;opacity:.85;
+}
+#app[data-ui-mode="HIDDEN"] .rsui-fx-canvas,
+#app[data-ui-mode="DOCKED"] .rsui-fx-canvas{display:none!important}
+
+/* Built-in card tilt continues to provide real pointer perspective. Extend its
+   beam to the newer weapon, weather, blip, wallpaper and native picker views. */
+#app .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+){
+  --rsfx-rx:0deg;--rsfx-ry:0deg;--rsfx-mx:50%;--rsfx-my:50%;
+  position:relative;transform-origin:center;backface-visibility:hidden;
+  transition:transform calc(220ms * var(--motion-speed,1)) cubic-bezier(.22,.83,.2,1),
+    box-shadow 210ms ease,border-color 210ms ease,filter 210ms ease!important;
+}
+#app[data-depth="medium"] .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+):is(:hover,:focus-within),
+#app[data-depth="high"] .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+):is(:hover,:focus-within){
+  transform:perspective(1000px) translateY(-3px) rotateX(var(--rsfx-rx)) rotateY(var(--rsfx-ry))!important;
+  box-shadow:0 13px 24px #0006,0 0 17px color-mix(in srgb,var(--accent2) 16%,transparent),inset 0 1px #f9ffff19!important;
+  filter:brightness(1.075);
+}
+/* Cursor-position lens adds dimensional feedback without adding DOM hit targets. */
+#app .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+)::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none!important;z-index:2;
+  background:radial-gradient(190px circle at var(--rsfx-mx,50%) var(--rsfx-my,50%),
+    color-mix(in srgb,var(--accent2) 19%,transparent),transparent 69%);
+  opacity:0;transition:opacity 180ms ease;
+}
+#app .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+):hover::after{opacity:1}
+/* Independent layers on artwork, kept in the original viewport. */
+#app .tablet-screen .hero{isolation:isolate}
+#app .tablet-screen .hero::before{
+  transform:translate3d(var(--rsui-hero-x,0px),var(--rsui-hero-y,0px),0) scale(1.045);
+  transition:transform 180ms ease-out!important;will-change:auto;
+}
+#app .tablet-screen :is(.library-card,.world-card,.workspace-tile,.action-tile,.weapon-card,.palette-card) :is(img,.thumb,.palette-scene,.ui-icon){
+  transition:transform 280ms cubic-bezier(.2,.85,.2,1),filter 260ms ease!important;
+}
+#app .tablet-screen :is(.workspace-tile,.action-tile,.weapon-card):hover .ui-icon{
+  transform:translateY(-2px) scale(1.08);filter:drop-shadow(0 0 8px var(--accent2));
+}
+#app .tablet-screen .weapon-card:is(:hover,:focus-visible){border-color:var(--accent2)!important}
+#app .tablet-screen :is(.blip-choice,.weather-option,.wall,.palette-card):hover{border-color:var(--accent2)!important}
+
+/* Buttons give a short physically grounded press; no actions or pointer hit targets changed. */
+#app .tablet-screen :is(.btn,.icon-btn,.nav button,.subnav button,.world-card button,.weapon-card,.palette-card,.rs-profile-tab){
+  position:relative;
+}
+#app .tablet-screen .rsui-ripple{
+  position:absolute!important;z-index:9!important;width:18px!important;height:18px!important;
+  left:var(--rsui-x,50%)!important;top:var(--rsui-y,50%)!important;
+  border-radius:50%!important;pointer-events:none!important;opacity:.8;
+  background:radial-gradient(circle,var(--accent2) 0%,color-mix(in srgb,var(--accent) 45%,transparent) 35%,transparent 72%);
+  transform:translate(-50%,-50%) scale(.2);
+  animation:rsuiPulse 480ms ease-out forwards!important;
+}
+@keyframes rsuiPulse{
+  from{opacity:.75;transform:translate(-50%,-50%) scale(.3)}
+  to{opacity:0;transform:translate(-50%,-50%) scale(7)}
+}
+#app[data-fx="off"] .rsui-ripple{display:none!important}
+
+/* Active rail beacon and tab responsiveness on all workspaces. */
+#app .tablet-screen .nav button.active::before{
+  content:"";position:absolute;top:16%;bottom:16%;left:0;width:3px;border-radius:2px;
+  background:var(--accent);box-shadow:0 0 10px var(--accent),0 0 20px color-mix(in srgb,var(--accent) 40%,transparent);
+  pointer-events:none;
+}
+#app .tablet-screen .subnav button.active{
+  box-shadow:inset 0 -2px var(--accent2),0 5px 12px #0003!important;
+}
+#app .tablet-screen :is(.input,.select,.textarea):focus{
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent2) 22%,transparent),0 0 15px color-mix(in srgb,var(--accent2) 18%,transparent)!important;
+}
+#app .tablet-screen :is(.btn,.icon-btn,.weapon-card,.wall,.palette-card,.nav button,.subnav button):focus-visible{
+  outline:2px solid var(--accent2)!important;outline-offset:2px!important;
+}
+#app .tablet-screen .rsfx-control-label{
+  font-size:11px;font-weight:850;letter-spacing:1.3px;color:var(--accent2);margin:16px 0 7px;
+}
+#app .tablet-screen .rsfx-choice{display:flex;gap:6px;flex-wrap:wrap}
+#app .tablet-screen .rsfx-choice>.btn{flex:1 1 auto;min-width:75px}
+
+/* Disable GPU animations for accessibility and the operator's explicit OFF choice. */
+#app[data-depth="off"] .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(
+  .weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card
+):is(:hover,:focus-within){transform:none!important;filter:none!important;box-shadow:none!important}
+#app[data-depth="off"] .tablet-screen .hero::before{transform:none!important}
+#app[data-motion="off"] .rsui-ripple,#app[data-motion="none"] .rsui-ripple,
+#app[data-motion="reduced"] .rsui-ripple{display:none!important}
+@media (prefers-reduced-motion:reduce){
+ #app .rsui-fx-canvas,#app .rsui-ripple{display:none!important}
+ #app .tablet-screen .hero::before{transform:none!important;transition:none!important}
+ #app .tablet-screen :is(.content,.modal-body,.quick-wheel-card) :is(.weapon-card,.weather-option,.blip-choice,.palette-card,.wall,.native-model-card):hover{transform:none!important;filter:none!important}
+}

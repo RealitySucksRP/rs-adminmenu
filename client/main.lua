@@ -67,6 +67,28 @@ local function setUiMode(mode)
     if mode~='DOCKED' then RSAdmin.dockInteracting=false end
     SendNUIMessage({type='uiMode',mode=mode})
 end
+-- NUI keyboard/mouse focus is not sufficient on every client/build to stop
+-- gameplay bindings from also reaching GTA. Block game input per frame only
+-- while this resource owns NUI focus (full tablet or held dock interaction).
+-- DO NOT freeze the ped or camera entity: that would interfere with legitimate
+-- admin actions, spectate, vehicle state, or other scripts after closing.
+CreateThread(function()
+    while true do
+        if RSAdmin.uiMode == 'FULL' or RSAdmin.dockInteracting then
+            -- 0: player/vehicle, 1: camera, 2: frontend/secondary controls.
+            -- These natives affect GTA input, not typing/clicking in the NUI.
+            DisableAllControlActions(0)
+            DisableAllControlActions(1)
+            DisableAllControlActions(2)
+            Wait(0)
+        else
+            -- Nothing is re-enabled here: other resources may legitimately
+            -- have their own control locks, and GTA resets ours each frame.
+            Wait(75)
+        end
+    end
+end)
+
 local function setOpen(state) setUiMode(state and 'FULL' or 'HIDDEN') end
 RSAdmin.SetOpen=setOpen
 RSAdmin.SetUiMode=setUiMode
